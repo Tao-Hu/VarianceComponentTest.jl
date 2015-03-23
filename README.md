@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/Tao-Hu/ExactVarianceComponentTest.jl.svg?branch=master)](https://travis-ci.org/Tao-Hu/ExactVarianceComponentTest.jl)
+[![Coverage Status](https://coveralls.io/repos/Tao-Hu/ExactVarianceComponentTest.jl/badge.svg?branch=master)](https://coveralls.io/r/Tao-Hu/ExactVarianceComponentTest.jl?branch=master)
+[![ExactVarianceComponentTest](http://pkg.julialang.org/badges/ExactVarianceComponentTest_release.svg)](http://pkg.julialang.org/?pkg=ExactVarianceComponentTest&ver=release)
 
 # ExactVarianceComponentTest
 
