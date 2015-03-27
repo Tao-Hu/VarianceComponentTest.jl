@@ -1,17 +1,11 @@
-# Welcome to MkDocs
+# Exact Variance Component Test
 
-For full documentation visit [mkdocs.org](http://mkdocs.org).
+*ExactVarianceComponentTest.jl* is a Julia package for performing exact variance component tests in genome-wide association study (GWAS). It provides three types of exact tests
 
-## Commands
+* exact likelihood ratio test (*eLRT*)
+* exact restricted likelihood ratio test (*eRLRT*)
+* exact score test (*eSC*)
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs help` - Print this help message.
+The input files for *ExactVarianceComponentTest.jl* are PLINK formatted files (**.bed**, **.bim** and **.fam** file), covariates file (**.txt** file) and trait file (**.txt** file). You should have these input files prepared before running our program. The output file (**.out** file) is a simple comma-delimited file containing the p-values for each group of SNPs under a certain testing scheme (eLRT, eRLRT or eSC).
 
-## Project layout
-
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+To use *ExactVarianceComponentTest.jl*, you need to call the *gwasvctest()* function.
