@@ -1,5 +1,10 @@
 module ExactVarianceComponentTest
 
-# package code goes here
+using Distributions
 
-end # module
+include("typedef.jl")
+include("vctestnullsim.jl")
+include("vctest.jl")
+include("gwasvctest.jl")
+
+end
