@@ -134,7 +134,7 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
             else
               partialSumW = [partialSumW; partialSumWConst[i]];
               totalSumW = [totalSumW; totalSumWConst[i]];
-              W = [W; WPreSim[:, i]];
+              W = [W WPreSim[:, i]];
             end
           end
         end
@@ -304,8 +304,13 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
 
     elseif test == "eScore"
 
-      simnull = sum(W .* evalAdjV, 1) ./ totalSumWConst;
-      simnull[simnull .< sum(evalV) / n] = sum(evalV) / n;
+      threshold = sum(evalV) / n;
+      if size(WPreSim, 1) == rankAdjV
+        simnull = sum(WPreSim .* evalAdjV, 1) ./ totalSumWConst;
+      else
+        simnull = sum(WPreSim[1 : rankAdjV, :] .* evalAdjV, 1) ./ totalSumWConst;
+      end
+      simnull[simnull .< threshold] = threshold;
 
     end
 
