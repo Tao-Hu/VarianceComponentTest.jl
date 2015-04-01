@@ -37,12 +37,12 @@ julia> using ExactVarianceComponentTest
 julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eScore", pvalueComputing = "MonteCarlo")
 ```
 
-**Note**: option `pvalueComputing` must be *MonteCarlo* under eSC.
+**Note**: 1) option `pvalueComputing` must be *MonteCarlo* under eSC. 2) if the input files are not at the current directory, you should specify the paths correctly.
 
 You can also call *gwasvctest* from command line. For example, to perform eRLRT
 
 ```
-$ julia -E 'using ExactVarianceComponentTest; gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT")
+$ julia -E 'using ExactVarianceComponentTest; gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT")'
 ```
 
 ---

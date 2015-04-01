@@ -72,7 +72,7 @@ Fields are separated by a whitespace. A typical FAM file looks like
 ---
 ## Covariates file
 
-Covariates file is a text file which contains the values of covariates. In covariates file, each line represents an individual. The first two fields are `Family ID` and `Individual ID`, the rest fields are the covariates/predictors (*e.g.* `sex`, `age`, `weight` and *etc*). The intercept should NOT be included. Fields are separated by a whitespace. A typical covariates file look like
+Covariates file is a text file which contains the values of covariates. In covariates file, each line represents an individual. The first two fields are `Family ID` and `Individual ID`, the rest fields are the covariates/predictors (*e.g.* *sex*, *age*, *weight* and *etc*). The intercept should NOT be included. Fields are separated by a whitespace. A typical covariates file look like
 
 ```
 2.0 T2DG0200001 1.0 0.8333876751238651 0.4668769615832563 -0.7067078743064089 0.4914401659107072

@@ -35,7 +35,7 @@ Next, all options are listed below.
 
 Option `plinkFile` indicates the file name (without extension) for the input PLINK files. All three PLINK files have the same file name but different extensions. Make sure the three PLINK files are at the same directory.
 
-If the three PLINK files are `plink.bed`, `plink.bim` and `plink.fam`, then use
+If the three PLINK files are *plink.bed*, *plink.bim* and *plink.fam*, then use
 
 ```julia
 gwasvctest(plinkFile = "/PATH/OF/plink")
@@ -46,7 +46,7 @@ Replace "/PATH/OF/" with the actual path of PLINK files.
 ---
 ## Specify input covariates file
 
-Option `covFile` indicates the file name for the input covariates file. If the covariates file is `covariates.txt`, then use
+Option `covFile` indicates the file name for the input covariates file. If the covariates file is *covariates.txt*, then use
 
 ```julia
 gwasvctest(covFile = "/PATH/OF/covariates.txt")
@@ -57,7 +57,7 @@ If option `covFile` is not specified, the covariates matrix **X** will be automa
 ---
 ## Specify input trait file
 
-Option `traitFile` indicates the file name for input trait file. If the trait file is `y.txt`, then use
+Option `traitFile` indicates the file name for input trait file. If the trait file is *y.txt*, then use
 
 ```julia
 gwasvctest(traitFile = "/PATH/OF/y.txt")
@@ -68,13 +68,13 @@ If option `traitFile` is not specified, the response vector **y** will be set au
 ---
 ## Specify output file
 
-Option `outFile` indicates the file name for the output file. If the output file name is set to `test.out`, then use
+Option `outFile` indicates the file name for the output file. If the output file name is set to *test.out*, then use
 
 ```julia
 gwasvctest(outFile = "/PATH/OF/test.out")
 ```
 
-Replace "/PATH/OF/" with the path where you want to store the output file. If option `outFile` is not specified, the output file name will be set to `plinkFile.out` and it will be stored at the current directory.
+Replace "/PATH/OF/" with the path where you want to store the output file. If option `outFile` is not specified, the output file name will be set to *plinkFile-julia.out* and it will be stored at the current directory.
 
 ---
 ## Choose testing scheme
