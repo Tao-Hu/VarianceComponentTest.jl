@@ -23,7 +23,8 @@ function vctest(y, X, V; bInit::Array{Float64, 1} = Float64[],
                 tmpmat5::Array{Float64, 2} = [Float64[] Float64[]],
                 denomvec::Array{Float64, 1} = Float64[],
                 d1f::Array{Float64, 1} = Float64[],
-                d2f::Array{Float64, 1} = Float64[])
+                d2f::Array{Float64, 1} = Float64[],
+                simnull::Array{Float64, 2} = [Float64[] Float64[]])
   # VCTEST Fit and test for the nontrivial variance component
   #
   # [SIMNULL] = VCTEST(y,X,V) fits and then tests for $H_0:sigma_1^2=0$ in
@@ -253,7 +254,7 @@ function vctest(y, X, V; bInit::Array{Float64, 1} = Float64[],
                                      tmpmat2 = tmpmat2, tmpmat3 = tmpmat3,
                                      tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
                                      denomvec = denomvec,
-                                     d1f = d1f, d2f = d2f);
+                                     d1f = d1f, d2f = d2f, simnull = simnull);
     stats.vc1_pvalue_se = sqrt(stats.vc1_pvalue * (1 - stats.vc1_pvalue) /
                                  nNullSimPts);
     stats.vc1_teststat = statLRT;
@@ -378,7 +379,7 @@ function vctest(y, X, V; bInit::Array{Float64, 1} = Float64[],
                                      tmpmat2 = tmpmat2, tmpmat3 = tmpmat3,
                                      tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
                                      denomvec = denomvec,
-                                     d1f = d1f, d2f = d2f);
+                                     d1f = d1f, d2f = d2f, simnull = simnull);
     stats.vc1_pvalue_se = sqrt(stats.vc1_pvalue * (1 - stats.vc1_pvalue) /
                                  nNullSimPts);
 
@@ -437,7 +438,7 @@ function vctest(y, X, V; bInit::Array{Float64, 1} = Float64[],
                                      tmpmat2 = tmpmat2, tmpmat3 = tmpmat3,
                                      tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
                                      denomvec = denomvec,
-                                     d1f = d1f, d2f = d2f);
+                                     d1f = d1f, d2f = d2f, simnull = simnull);
     stats.vc1_pvalue_se = sqrt(stats.vc1_pvalue * (1 - stats.vc1_pvalue) /
                                  nNullSimPts);
 

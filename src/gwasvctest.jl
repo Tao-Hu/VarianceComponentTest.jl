@@ -482,11 +482,12 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     denomvec = Array(Float64, 300);
     d1f = Array(Float64, 300);
     d2f = Array(Float64, 300);
+    simnull = Array(Float64, 1, 300);
   else
-    partialSumW = Float64[];
-    totalSumW = Float64[];
-    lambda = [Float64[] Float64[]];
-    W = [Float64[] Float64[]];
+    partialSumW = Array(Float64, nNullSimPts);
+    totalSumW = Array(Float64, nNullSimPts);
+    lambda = Array(Float64, 1, nNullSimPts);
+    W = Array(Float64, windowSize, nNullSimPts);
     tmpmat0 = Array(Float64, windowSize, nNullSimPts);
     tmpmat1 = Array(Float64, windowSize, nNullSimPts);
     tmpmat2 = Array(Float64, windowSize, nNullSimPts);
@@ -496,6 +497,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     denomvec = Array(Float64, nNullSimPts);
     d1f = Array(Float64, nNullSimPts);
     d2f = Array(Float64, nNullSimPts);
+    simnull = Array(Float64, 1, nNullSimPts);
   end
   subXPhitSV = Array(Float64, size(XPhitNullBasis, 2), rankQPhi);
   pSubXPhitSV = pointer(subXPhitSV);
@@ -727,7 +729,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
                  lambda = lambda, W = W, nPreRank = nPreRank,
                  tmpmat0 = tmpmat0, tmpmat1 = tmpmat1, tmpmat2 = tmpmat2,
                  tmpmat3 = tmpmat3, tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
-                 denomvec = denomvec, d1f = d1f, d2f = d2f);
+                 denomvec = denomvec, d1f = d1f, d2f = d2f, simnull = simnull);
         pvalList[g] = testStats.vc1_pvalue;
 
         # recover VWorkSqrt
