@@ -1,3 +1,62 @@
+@doc """
+gwasvctest(plinkFile::String = "", covFile::String = "", traitFile::String = "",
+outFile::String = "", test::String = "eRLRT", kinship::String = "GRM",
+kernel::String = "GRM", pvalueComputing::String = "chi2", windowSize::Int = 50,
+infLambda::Float64 = 0.0, MemoryLimit::Int = 200000000, nNullSimPts::Int = 10000,
+nMMmax::Int = 0, nBlockAscent::Int = 1000, nNullSimNewtonIter::Int = 15,
+tolX::Float64 = 1e-6, snpWtType::String = "")
+
+Test the SNP set effect with presence of additive genetic effect and
+enviromental effect.
+
+Optional input name-value pairs:
+
+"plinkFile" - Input Plink files names without extension.
+
+"covFile" - Input file to form the covariate matrix X.
+
+"traitFile" - Input file to form the response vector y.
+
+"test"- "eLRT"|"eRLRT"|"eScore"|"none", the requested test, it also
+dictates the estimation method, default is "eRLRT".
+
+"kinship" - "GRM"|"MoM"|"theoretical"|"none", indicates method used to
+compute the kinship matrix, default is "GRM". You can also use your
+own kinship matrix, you can do that by replacing "none" with the file
+name in which store the pre-calculated kinship matrix.
+
+"kernel" - "GRM"|"IBS1"|"IBS2"|"IBS3", indicates method used to compute
+the kernel matrix S, default is "GRM".
+
+"pvalueComputing" - "MonteCarlo"|"chi2", indicates the method (Monte
+Carlo simulaion or Chi square approximation) used to compute the
+p-value for eLRT or eRLRT, default is "chi2".
+
+"windowSize" - # SNPs in a SNP set, default is 50.
+
+"infLambda" - Any rational number with float precision. Control the
+trade-off for approximating kinship matrix, default is 0.0.
+
+"MemoryLimit" - Max memory used to read and store the raw data, default
+is 200000000 (equivalent to 200 megabytes).
+
+"nNullSimPts"- # simulation samples, default is 10000.
+
+"nMMmax" - Max MM iterations, default is 10 (eLRT) or 1000 (eRLRT).
+
+"nBlockAscent" - Max block ascent iterations, default is 1000.
+
+"nNullSimNewtonIter" - Max Newton iteration, default is 15.
+
+"tolX" - Tolerance in change of parameters, default is 1e-6.
+
+"snpWtType" - "beta"|"invvar", add weights to the kernel matrix S,
+default is "" (add no weights by default).
+
+Output name-value pair:
+
+"outFile" - Output file which store the P-values for SNP sets effects.
+  """ ->
 function gwasvctest(args...; covFile::String = "", device::String = "CPU",
                     infLambda::Float64 = 0.0, kernel::String = "GRM",
                     kinship::String = "GRM", nMMmax::Int = 0,
@@ -7,52 +66,6 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
                     test::String = "eRLRT", tolX::Float64 = 1e-6,
                     traitFile::String = "", MemoryLimit::Int = 200000000,
                     pvalueComputing::String = "chi2", windowSize::Int = 50)
-  # GWVCTEST GWAS by variance component testing
-  #
-  # [] = GWASVCTEST() test the SNP set effect with presence of additive genetic
-  # effect and enviromental effect.
-  #
-  #   Optional input name-value pairs:
-  #       'traitFile' - Input file to form the response vector y
-  #       'covFile' - Input file to form the covariate matrix X
-  #       'device' - 'CPU'|'GPU', on which device the computions are performed,
-  #         default is 'CPU'. If you want to use 'GPU' option, make sure you
-  #         machine has the GPU which is supported by your installed MATLAB
-  #         version
-  #       'infLambda' -
-  #       'kernel' - 'GRM'|'IBS1'|'IBS2'|'IBS3', indicates method used to compute
-  #         the kernel matrix S, default is 'GRM'
-  #       'kinship' - 'GRM'|'MoM'|'theoretical'|'none', indicates method used to
-  #         compute the kinship matrix \Phi, default is 'GRM'. You can also use
-  #         your own kinship matrix, you can do that by replacing 'none' with the
-  #         file name in which store the pre-calculated kinship matrix
-  #       'nBlockAscent' - max block ascent iterations, default is 1000
-  #       'nMMmax' - max MM iterations, default is 10 (eLRT) or 1000 (eRLRT)
-  #       'nNullSimPts'- # simulation samples, default is 10000
-  #       'nNullSimNewtonIter' - max Newton iteration, default is 15
-  #       'outFile' - Output file which store the P-values for SNP sets effects
-  #       'plinkFile' - Input Plink files names without extension
-  #       'snpWtType' - 'beta'|'invvar', add weights to the kernel matrix S,
-  #         default is '' (add no weights by default)
-  #       'test'- 'eLRT'|'eRLRT'|'eScore'|'none', the requested test, it also
-  #         dictates the estimation method, default is 'eRLRT'
-  #       'tolX' - tolerance in change of parameters, default is 1e-6
-  #       'windowSize' - # SNPs in a SNP set, default is 50
-  #       'MemoryLimit' - max memory used to read and store the raw data, default
-  #         is 0.2 (equivalent to 200 megabytes)
-  #       'pvalueComputing' - 'MonteCarlo'|'chi2', indicates the method (Monte
-  #         Carlo simulaion or Chi square approximation) used to compute the
-  #         P-value for eLRT or eRLRT, default is 'chi2'
-  #
-  #   Output:
-  #       outFile - Output file which store the P-values for SNP sets effects
-  #
-  # Examples
-  #
-  # See also
-  #
-  # Reference
-  #
 
   ## parse data from files
   plinkBedfile = string(plinkFile, ".bed");
@@ -129,13 +142,13 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
   if kinship == "GRM" || kinship == "MoM"
 
     genoOri = Array(Float64, nPer, SNPSize);
-    geno = Float64[];
+    geno = Array(Float64, nPer, SNPSize);
     kinMat = zeros(nPer, nPer);
     tmpscalar = 0.0;
     nSNPred = 0;
     offset = 0;
-    genostring = "";
     sumIsnan = Array(Float64, 1, SNPSize);
+    nChrObs = Array(Float64, 1, SNPSize);
     mafOri = Array(Float64, SNPSize);
     maf = Array(Float64, SNPSize);
     oneConst = ones(nPer);
@@ -146,22 +159,20 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
       # read the binary data
       if idxRead == nReads
         curSNPSize = nSNP - (idxRead - 1) * SNPSize;
-        #geno = genoOri[:, 1 : curSNPSize];
       else
         curSNPSize = SNPSize;
-        #geno = genoOri[:, 1 : curSNPSize];
       end
-      #geno = zeros(nPer, curSNPSize);
 
       readgeno!(genoOri, curSNPSize, nPer, SNPSize, idxRead, bin2geno, rawdata,
-                offset, genostring);
+                offset);
 
-      #nChrObs = 2 * (size(geno,1) - sum(isnan(geno), 1));
       tmpMatIsnan = isnan(genoOri);
       sum!(sumIsnan, tmpMatIsnan);
-      nChrObs = 2 * (nPer - sumIsnan);
+      for i = 1 : curSNPSize
+        nChrObs[1, i] = 2 * (nPer - sumIsnan[1, i]);
+      end
 
-      # minor allele frequencies
+      # minor allele frequencies and get rid of mono-allelic SNPs
       counter = 0;
       offset = (idxRead - 1) * SNPSize;
       for i = 1 : curSNPSize
@@ -175,20 +186,15 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
         if mafOri[i] != 0
           counter += 1;
           maf[counter] = mafOri[i];
+          pGenoOri = pointer(genoOri) + (i - 1) * nPer * sizeof(Float64);
+          pGeno = pointer(geno) + (counter - 1) * nPer * sizeof(Float64);
+          BLAS.blascopy!(nPer, pGenoOri, 1, pGeno, 1);
         end
       end
       nSNPred += (curSNPSize - counter);
 
-      # get rid of mono-allelic SNPs
-      monoSNPidx = mafOri .!= 0;
-      #nSNPred += (curSNPSize - countnz(monoSNPidx));
-      #maf = maf[monoSNPidx];
-      geno = genoOri[:, monoSNPidx];
-
       # impute missing genotype by expected minor allele counts
-      #ridx, cidx = ind2sub(size(geno), find(isnan(geno)));
-      #geno[sub2ind(size(geno), find(isnan(geno)))] = 2 * maf[cidx];
-      for j = 1 : size(geno, 2)
+      for j = 1 : counter
         for i = 1 : nPer
           if isnan(geno[i, j])
             geno[i, j] = 2 * maf[j];
@@ -198,28 +204,36 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
 
       if kinship == "GRM"
         # center and scale genotype matrix by minor allele frequencies
-        gMAF = maf[1 : size(geno, 2)];
-        BLAS.ger!(-2.0, oneConst, gMAF, geno);
-        if size(geno, 2) != SNPSize
-          tmpvecKernel = tmpvecKernel[1 : size(geno, 2)];
+        gMAF = maf[1 : counter];
+        if counter < SNPSize
+          geno = geno[:, 1 : counter];
+          tmpvecKernel = tmpvecKernel[1 : counter];
         end
-        for i = 1 : size(geno, 2)
+        BLAS.ger!(-2.0, oneConst, gMAF, geno);
+        for i = 1 : counter
           tmpvecKernel[i] = 1.0 / sqrt(2 * gMAF[i] * (1 - gMAF[i]));
         end
         scale!(geno, tmpvecKernel);
-        if size(geno, 2) != SNPSize
-          tmpvecKernel = [tmpvecKernel; Array(Float64, SNPSize - size(geno, 2))];
-        end
         # estimate kinship by genetic relation matrix (GRM) from dense markers
         # TODO: Check Yang et al paper the precise formula
         BLAS.gemm!('N', 'T', 1.0, geno, geno, 1.0, kinMat);
+        if counter != SNPSize
+          geno = [geno Array(Float64, nPer, SNPSize - counter)];
+          tmpvecKernel = [tmpvecKernel; Array(Float64, SNPSize - counter)];
+        end
       elseif kinship == "MoM"
+        if counter < SNPSize
+          geno = geno[:, 1 : counter];
+        end
         # shift to {-1,0,1} encoding
         geno = geno - 1.0;
         # estimate kinship by method of moment from dense markers
-        gMAF = maf[1 : size(geno, 2)];
+        gMAF = maf[1 : counter];
         tmpscalar += sumabs2(gMAF) + sumabs2(1 - gMAF);
         BLAS.gemm!('N', 'T', 0.5, geno, geno, 1.0, kinMat);
+        if counter != SNPSize
+          geno = [geno Array(Float64, nPer, SNPSize - counter)];
+        end
       end
 
     end
@@ -446,25 +460,22 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
   ## test group by group
 
   QRes = Array(Float64, nPerKeep, rankQPhi);
-  geno = Float64[];
-  #snpIDred = [];
+  geno = Array(Float64, nPer, SNPSize);
   nSNPredVec = fill(0, nReads);
   genoOri = Array(Float64, nPer, SNPSize);
   tmpMat = Array(Float64, windowSize, size(XPhitNullBasis, 2));
   snpSqrtWts = Float64[];
   gMAF = Float64[];
   gSNP = Float64[];
-  #tmpvec = Float64[];
   tmpvec = similar(yShift);
   tmpvecQRes = Array(Float64, rankQPhi);
-  #yWork = Float64[];
   yWork = similar(evalPhiAdj);
-  #VWorkSqrt = Float64[];
   VWorkSqrt = Array(Float64, length(evalPhiAdj), windowSize);
   VWorkSqrt2 = Array(Float64, length(evalPhiAdj), windowSize);
   mafOri = Array(Float64, SNPSize);
   maf = Array(Float64, SNPSize);
   sumIsnan = Array(Float64, 1, SNPSize);
+  nChrObs = Array(Float64, 1, SNPSize);
   snpIDred = similar(snpID);
   partialSumWConst = Array(Float64, nNullSimPts);
   totalSumWConst = Array(Float64, nNullSimPts);
@@ -482,7 +493,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     denomvec = Array(Float64, 300);
     d1f = Array(Float64, 300);
     d2f = Array(Float64, 300);
-    simnull = Array(Float64, 1, 300);
+    simnull = Array(Float64, 300);
   else
     partialSumW = Array(Float64, nNullSimPts);
     totalSumW = Array(Float64, nNullSimPts);
@@ -497,12 +508,11 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     denomvec = Array(Float64, nNullSimPts);
     d1f = Array(Float64, nNullSimPts);
     d2f = Array(Float64, nNullSimPts);
-    simnull = Array(Float64, 1, nNullSimPts);
+    simnull = Array(Float64, nNullSimPts);
   end
   subXPhitSV = Array(Float64, size(XPhitNullBasis, 2), rankQPhi);
   pSubXPhitSV = pointer(subXPhitSV);
   offset = 0;
-  genostring = "";
   oneConst = ones(nPerKeep);
   tmpvecKernel = Array(Float64, windowSize);
 
@@ -511,20 +521,18 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     # read the binary data
     if idxRead == nReads
       curSNPSize = nSNP - (idxRead - 1) * SNPSize;
-      #genoOri = genoOri[:, 1 : curSNPSize];
-      #maf = maf[1 : curSNPSize];
-      #sumIsnan = sumIsnan[:, 1 : curSNPSize];
     else
       curSNPSize = SNPSize;
     end
 
     readgeno!(genoOri, curSNPSize, nPer, SNPSize, idxRead, bin2geno, rawdata,
-              offset, genostring);
+              offset);
 
     tmpMatIsnan = isnan(genoOri);
-    #nChrObs = 2 * (size(genoOri,1) - sum(tmpMatIsnan, 1));
     sum!(sumIsnan, tmpMatIsnan);
-    nChrObs = 2 * (nPer - sumIsnan);
+    for i = 1 : curSNPSize
+      nChrObs[1, i] = 2 * (nPer - sumIsnan[1, i]);
+    end
 
     # minor allele frequencies and get rid of mono-allelic SNPs
     counter = 0;
@@ -541,22 +549,14 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
         counter += 1;
         maf[counter] = mafOri[i];
         snpIDred[counter] = snpID[i + offset];
+        pGenoOri = pointer(genoOri) + (i - 1) * nPer * sizeof(Float64);
+        pGeno = pointer(geno) + (counter - 1) * nPer * sizeof(Float64);
+        BLAS.blascopy!(nPer, pGenoOri, 1, pGeno, 1);
       end
     end
     nSNPredVec[idxRead] = curSNPSize - counter;
 
-    # get rid of mono-allelic SNPs
-    monoSNPidx = mafOri .!= 0;
-    #nSNPredVec[idxRead] = curSNPSize - countnz(monoSNPidx);
-    #heteroidx = find(maf .!= 0) + (idxRead - 1) * SNPSize;
-    #maf = maf[monoSNPidx];
-    geno = genoOri[:, monoSNPidx];
-    #snpIDred = snpID[heteroidx];
-
     # impute missing genotype by expected minor allele counts
-    #tmpMatIsnan = isnan(geno);
-    #ridx, cidx = ind2sub(size(geno), find(tmpMatIsnan));
-    #geno[sub2ind(size(geno), find(tmpMatIsnan))] = 2 * maf[cidx];
     for j = 1 : size(geno, 2)
       for i = 1 : nPer
         if isnan(geno[i, j])
@@ -586,7 +586,6 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
       grpSize = gUB[g] - gLB[g] + 1;
       if isempty(snpWtType)
         # constant weights
-        #snpSqrtWts = ones(grpSize);
         if g > 1 && g < nGrps
           snpSqrtWts = fill!(snpSqrtWts, 1);
         else
@@ -604,9 +603,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
       # retrieve group genotypes
       if kernel == "GRM"
         gMAF = maf[gLB[g] : gUB[g]];
-        #gMAF = view(maf, gLB[g] : gUB[g]);
         gSNP = geno[keepIdx, gLB[g] : gUB[g]];
-        #gSNP = view(geno, :, gLB[g] : gUB[g]);
         # center and scale genotype matrix by MAF
         BLAS.ger!(-2.0, oneConst, gMAF, gSNP);
         if g == nGrps && grpSize != windowSize
@@ -749,7 +746,6 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     # write output
     fid = open(outFile, "a");
     for g = 1 : nGrps
-      #println(fid, "$(snpIDred[gLB[g]]),$(snpIDred[gUB[g]]),$(pvalList[g])");
       println(fid, snpIDred[gLB[g]], ",", snpIDred[gUB[g]], ",", pvalList[g]);
     end
     close(fid);
@@ -763,69 +759,6 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
       end
     end
 
-  end
-
-end
-
-
-
-
-# read in part of genotype data according to memory limit
-function readgeno!(geno::Matrix{Float64}, curSNPSize::Int, nPer::Int,
-                   SNPSize::Int, idxRead::Int, bin2geno::Matrix{Float64},
-                   rawdata::Matrix{Int8}, offset::Int, genostring::String)
-
-  offset = (idxRead - 1) * SNPSize;
-  nrow = iceil(nPer / 4);
-
-  for j = 1 : curSNPSize
-    cumPer = 0;
-    for i = 1 : nrow - 1
-      #genostring = bits(rawdata[i, offset + j]);
-      curvalue = rawdata[i, offset + j];
-      if curvalue >= 0
-        curvalue += 1;
-      else
-        curvalue += 257;
-      end
-      #for k = 8:-2:2
-        #cumPer = cumPer + 1;
-        #geno[cumPer, j] = map2geno[parseint(genostring[k:-1:k-1], 2) + 1];
-        #geno[cumPer, j] =
-        #  map2geno[parseint(bits(rawdata[i, (idxRead - 1) *
-        #                                   SNPSize + j])[2*k:-1:2*k-1], 2) + 1];
-      #end
-      for k = 1 : 4
-        cumPer = cumPer + 1;
-        geno[cumPer, j] = bin2geno[k, curvalue];
-      end
-    end
-    #genostring = bits(rawdata[nrow, offset + j]);
-    curvalue = rawdata[nrow, offset + j];
-    if curvalue >= 0
-      curvalue += 1;
-    else
-      curvalue += 257;
-    end
-    #for k = 8:-2:2
-      #if cumPer < nPer
-        #cumPer = cumPer + 1;
-        #geno[cumPer, j] = map2geno[parseint(genostring[k:-1:k-1], 2) + 1];
-        #geno[cumPer, j] =
-        #  map2geno[parseint(bits(rawdata[iceil(nPer / 4), (idxRead - 1) *
-        #                                   SNPSize + j])[2*k:-1:2*k-1], 2) + 1];
-      #else
-        #break;
-      #end
-    #end
-    for k = 1 : 4
-      if cumPer < nPer
-        cumPer = cumPer + 1;
-        geno[cumPer, j] = bin2geno[k, curvalue];
-      else
-        break;
-      end
-    end
   end
 
 end

@@ -22,7 +22,7 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
                        denomvec::Array{Float64, 1} = Float64[],
                        d1f::Array{Float64, 1} = Float64[],
                        d2f::Array{Float64, 1} = Float64[],
-                       simnull::Array{Float64, 2} = [Float64[] Float64[]])
+                       simnull::Array{Float64, 1} = Float64[])
   # VCTESTNULLSIM Simulate null distribution for testing zero var. component
   #
   # VCTESTNULLSIM(evalV,evalAdjV,n,rankX,WPreSim) simulate the null distributions
@@ -300,7 +300,7 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
         pvalue = countnz(simnull .>= teststat) / length(simnull);
         # recover the dimension of simnull
         if length(simnull) < nSimPts
-          simnull = [simnull zeros(1, nSimPts - length(simnull))];
+          simnull = [simnull; zeros(nSimPts - length(simnull))];
         end
         return pvalue;
       elseif pvalueComputing == "chi2"
@@ -310,7 +310,7 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
         if teststat == 0; pvalue = pvalue + patzero; end;
         # recover the dimension of simnull
         if length(simnull) < counter
-          simnull = [simnull zeros(1, counter - length(simnull))];
+          simnull = [simnull; zeros(counter - length(simnull))];
         end
         return pvalue;
       end
