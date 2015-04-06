@@ -1,8 +1,13 @@
 function readgeno!(geno::Matrix{Float64}, curSNPSize::Int, nPer::Int,
                    SNPSize::Int, idxRead::Int, bin2geno::Matrix{Float64},
-                   rawdata::Matrix{Int8}, offset::Int)
+                   rawdata::Matrix{Int8}, offset::Int, flagAnnotate::Bool;
+                   offsetSize::Vector{Int64} = Int64[])
 
-  offset = (idxRead - 1) * SNPSize;
+  if !flagAnnotate
+    offset = (idxRead - 1) * SNPSize;
+  else
+    offset = offsetSize[idxRead];
+  end
   nrow = iceil(nPer / 4);
 
   for j = 1 : curSNPSize

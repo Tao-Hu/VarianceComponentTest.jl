@@ -1,4 +1,3 @@
-#@iprofile begin
 function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
                        device::String = "CPU", nSimPts::Int = 10000,
                        nNewtonIter::Int = 15, test::String = "eLRT",
@@ -21,8 +20,7 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
                        tmpmat5::Array{Float64, 2} = [Float64[] Float64[]],
                        denomvec::Array{Float64, 1} = Float64[],
                        d1f::Array{Float64, 1} = Float64[],
-                       d2f::Array{Float64, 1} = Float64[],
-                       simnull::Array{Float64, 1} = Float64[])
+                       d2f::Array{Float64, 1} = Float64[], offset::Int = 0)
   # VCTESTNULLSIM Simulate null distribution for testing zero var. component
   #
   # VCTESTNULLSIM(evalV,evalAdjV,n,rankX,WPreSim) simulate the null distributions
@@ -31,11 +29,6 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
   #
   #    OUTPUT:
   #        pvalue: p-value of the given test
-
-  # load the packages
-  #using Distributions;
-
-  # parse inputs
 
   # test statistics = 0 means p-value=1
   if teststat <= 0
@@ -76,7 +69,7 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
         totalSumWConst[i] = BLAS.asum(rankAdjV, pW, 1) + partialSumWConst[i];
       end
     else
-      if windowSize - rankAdjV >= nPreRank
+      if rankAdjV >= nPreRank
         partialSumWConst = rand(Chisq(n - rankX - rankAdjV), nSimPts);
         for i = 1 : nSimPts
           pW = pointer(WPreSim) + (i - 1) * windowSize * sizeof(Float64);
@@ -86,9 +79,9 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
         ppw = pointer(partialSumWConst);
         ptw = pointer(totalSumWConst);
         pppw = pointer(PrePartialSumW) +
-          (nPreRank - windowSize + rankAdjV - 1) * nSimPts * sizeof(Float64);
+          (rankAdjV - 1) * nSimPts * sizeof(Float64);
         pptw = pointer(PreTotalSumW) +
-          (nPreRank - windowSize + rankAdjV - 1) * nSimPts * sizeof(Float64);
+          (rankAdjV - 1) * nSimPts * sizeof(Float64);
         BLAS.blascopy!(nSimPts, pppw, 1, ppw, 1);
         BLAS.blascopy!(nSimPts, pptw, 1, ptw, 1);
       end
@@ -126,7 +119,8 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
           end
         end
         #lambda = zeros(1, counter);
-        fill!(lambda, 0.0);
+        #fill!(lambda, 0.0);
+        fill!(lambda, 1e-5);
       else
         counter = 0;
         nPtsChi2 = 300;
@@ -144,7 +138,8 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
         end
         patzero = (nSimPts - counter) / nSimPts;
         counter = nPtsChi2;
-        fill!(lambda, 0.0);
+        #fill!(lambda, 0.0);
+        fill!(lambda, 1e-5);
       end
 
       # Newton-Raphson iteration
@@ -265,7 +260,7 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
         tmpmat6 = Array(Float64, rankV, counter);
         BLAS.gemm!('N', 'N', 1.0, reshape(evalV, rankV, 1), lambda, 0.0,
                    tmpmat6);
-        #simnull = Array(Float64, 1, counter);
+        simnull = Array(Float64, counter);
         for j = 1 : counter
           tmpprod = 1.0;
           for i = 1 : rankV
@@ -275,7 +270,7 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
             log(tmpprod);
         end
       else
-        #simnull = Array(Float64, 1, counter);
+        simnull = Array(Float64, counter);
         for j = 1 : counter
           tmpprod = 1.0;
           for i = 1 : rankAdjV
@@ -287,37 +282,15 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
       end
       if pvalueComputing == "MonteCarlo"
         if nSimPts > counter
-          #simnull = [simnull zeros(1, nSimPts - counter)];
-          for i = counter+1 : nSimPts
-            simnull[i] = 0.0;
-          end
+          simnull = [simnull; zeros(nSimPts - counter)];
         end
       end
       simnull = simnull[simnull .>= 0];
 
-      # compute empirical p-value
-      if pvalueComputing == "MonteCarlo"
-        pvalue = countnz(simnull .>= teststat) / length(simnull);
-        # recover the dimension of simnull
-        if length(simnull) < nSimPts
-          simnull = [simnull; zeros(nSimPts - length(simnull))];
-        end
-        return pvalue;
-      elseif pvalueComputing == "chi2"
-        ahat = var(simnull) / (2 * mean(simnull));
-        bhat = 2 * (mean(simnull) ^ 2) / var(simnull);
-        pvalue = (1 - patzero) * (1 - cdf(Chisq(bhat), teststat / ahat));
-        if teststat == 0; pvalue = pvalue + patzero; end;
-        # recover the dimension of simnull
-        if length(simnull) < counter
-          simnull = [simnull; zeros(counter - length(simnull))];
-        end
-        return pvalue;
-      end
-
     elseif test == "eScore"
 
       threshold = sum(evalV) / n;
+      simnull = Array(Float64, nSimPts);
       for j = 1 : nSimPts
         tmpsum = 0.0;
         for i = 1 : rankAdjV
@@ -326,15 +299,32 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
         simnull[j] = max(tmpsum / totalSumWConst[j], threshold);
       end
 
-      # compute empirical p-value
-      if pvalueComputing == "MonteCarlo"
-        pvalue = countnz(simnull .>= teststat) / length(simnull);
-        return pvalue;
-      elseif pvalueComputing == "chi2"
+    end
+
+    # compute empirical p-value
+    if pvalueComputing == "MonteCarlo"
+      pvalue = countnz(simnull .>= teststat) / length(simnull);
+      return pvalue;
+    elseif pvalueComputing == "chi2"
+      if test == "eScore"
         error("vctestnullsim:notSupportedMode\n",
               "You can only use MonteCarlo mode for the p-value calculation of score test");
       end
-
+      ahat = var(simnull) / (2 * mean(simnull));
+      bhat = 2 * (mean(simnull) ^ 2) / var(simnull);
+      if mean(simnull) == 0 && var(simnull) == 0
+        pvalue = 1.0;
+        println("Invalid p-value occur! Starting from row ", offset+1);
+      elseif length(simnull) == 0
+        pvalue = 1.0;
+        println("All simulated statistics are negative! Starting from row ", offset+1);
+      else
+        #println("mean of simnull = ", mean(simnull), ", var = ", var(simnull));
+        #println("length of simnull = ", length(simnull), ", sum = ", sum(simnull));
+        pvalue = (1 - patzero) * (1 - cdf(Chisq(bhat), teststat / ahat));
+        if teststat == 0; pvalue = pvalue + patzero; end;
+      end
+      return pvalue;
     end
 
   elseif device == "GPU"
@@ -344,5 +334,3 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
   end
 
 end
-
-#end
