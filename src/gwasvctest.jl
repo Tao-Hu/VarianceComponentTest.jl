@@ -91,14 +91,14 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
   map2geno = [2; 1; NaN; 0];
   bin2geno = Array(Float64, 4, 2 ^ 8);
   countbin = 1;
-  for iB1 = 0 : 3
-    tmpper1 = map2geno[iB1 + 1];
-    for iB2 = 0 : 3
-      tmpper2 = map2geno[iB2 + 1];
-      for iB3 = 0 : 3
-        tmpper3 = map2geno[iB3 + 1];
-        for iB4 = 0 : 1
-          tmpper4 = map2geno[iB4 + 1];
+  for iB4 = 0 : 3
+    tmpper4 = map2geno[iB4 + 1];
+    for iB3 = 0 : 3
+      tmpper3 = map2geno[iB3 + 1];
+      for iB2 = 0 : 3
+        tmpper2 = map2geno[iB2 + 1];
+        for iB1 = 0 : 3
+          tmpper1 = map2geno[iB1 + 1];
           bin2geno[1, countbin] = tmpper1;
           bin2geno[2, countbin] = tmpper2;
           bin2geno[3, countbin] = tmpper3;
@@ -505,6 +505,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
 
   QRes = Array(Float64, nPerKeep, rankQPhi);
   nSNPredVec = fill(0, nReads);
+  nActualSNP = 0;
   snpSqrtWts = Float64[];
   gMAF = Float64[];
   gSNP = Float64[];
@@ -610,11 +611,11 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
         end
       end
       nSNPredVec[idxRead] = curSNPSize - counter;
-      println(nSNPredVec[idxRead]);
+      nActualSNP += counter;
 
       if counter == 0
-        println("No valid SNPs at the group which starting from row ",
-                offset + 1);
+        #println("No valid SNPs at the group which starting from row ",
+        #        offset + 1);
         continue;
       end
 
@@ -808,6 +809,10 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
 
     end
 
+    # summary
+    println("There are ", nSNP, " SNPs in total.");
+    println(nActualSNP, " SNPs were analysed.");
+
     ## provide annotation file
   else
 
@@ -859,9 +864,17 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
         end
       end
       nSNPredVec[idxRead] = curSNPSize - counter;
+      nActualSNP += counter;
       if counter == 0
-        println("No valid SNPs at the group which starting from row ",
-                offsetSize[idxRead] + 1);
+        #println("No valid SNPs at the group which starting from row ",
+        #        offsetSize[idxRead] + 1);
+        # display progress
+        if nReads > 1
+          if idxRead == percentVec[percentIdx]
+            println(percentIdx, "0 %");
+            percentIdx += 1;
+          end
+        end
         continue;
       end
 
@@ -1005,6 +1018,10 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
       close(fid);
 
     end
+
+    # summary
+    println("There are ", nSNP, " SNPs in total.");
+    println(nActualSNP, " SNPs were analysed.");
 
   end
 

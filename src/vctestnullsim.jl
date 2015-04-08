@@ -120,8 +120,8 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
           end
         end
         #lambda = zeros(1, counter);
-        #fill!(lambda, 0.0);
-        fill!(lambda, 1e-5);
+        fill!(lambda, 0.0);
+        #fill!(lambda, 1e-5);
       else
         counter = 0;
         for i = 1 : nSimPts
@@ -138,8 +138,8 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
         end
         patzero = (nSimPts - counter) / nSimPts;
         counter = nPtsChi2;
-        #fill!(lambda, 0.0);
-        fill!(lambda, 1e-5);
+        fill!(lambda, 0.0);
+        #fill!(lambda, 1e-5);
       end
 
       # Newton-Raphson iteration
@@ -327,18 +327,18 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
     elseif pvalueComputing == "chi2"
       ahat = var(simnull) / (2 * mean(simnull));
       bhat = 2 * (mean(simnull) ^ 2) / var(simnull);
-      if mean(simnull) == 0 && var(simnull) == 0
-        pvalue = 1.0;
-        println("Invalid p-value occur! Starting from row ", offset+1);
-      elseif length(simnull) == 0
-        pvalue = 1.0;
-        println("All simulated statistics are negative! Starting from row ", offset+1);
-      else
+      #if mean(simnull) == 0 && var(simnull) == 0
+      #  pvalue = 1.0;
+      #  println("Invalid p-value occur! Starting from row ", offset+1);
+      #elseif length(simnull) == 0
+      #  pvalue = 1.0;
+      #  println("All simulated statistics are negative! Starting from row ", offset+1);
+      #else
         #println("mean of simnull = ", mean(simnull), ", var = ", var(simnull));
         #println("length of simnull = ", length(simnull), ", sum = ", sum(simnull));
-        pvalue = (1 - patzero) * (1 - cdf(Chisq(bhat), teststat / ahat));
-        if teststat == 0; pvalue = pvalue + patzero; end;
-      end
+      pvalue = (1 - patzero) * (1 - cdf(Chisq(bhat), teststat / ahat));
+      if teststat == 0; pvalue = pvalue + patzero; end;
+      #end
       return pvalue;
     end
 
