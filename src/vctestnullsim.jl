@@ -52,6 +52,7 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
   if device == "CPU"
 
     # Preparations
+    nPtsChi2 = 300;
     if size(WPreSim, 1) < rankAdjV
       newSim = randn(rankAdjV - size(WPreSim, 1), nSimPts);
       if isempty(WPreSim)
@@ -123,7 +124,6 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
         fill!(lambda, 1e-5);
       else
         counter = 0;
-        nPtsChi2 = 300;
         for i = 1 : nSimPts
           pW = pointer(WPreSim) + (i - 1) * windowSize * sizeof(Float64);
           if BLAS.dot(rankAdjV, pW, 1, evalAdjV, 1) / totalSumWConst[i] > threshold
@@ -290,13 +290,32 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
     elseif test == "eScore"
 
       threshold = sum(evalV) / n;
-      simnull = Array(Float64, nSimPts);
-      for j = 1 : nSimPts
-        tmpsum = 0.0;
-        for i = 1 : rankAdjV
-          tmpsum += WPreSim[i, j] * evalAdjV[i];
+      if pvalueComputing == "MonteCarlo"
+        simnull = Array(Float64, nSimPts);
+        for j = 1 : nSimPts
+          tmpsum = 0.0;
+          for i = 1 : rankAdjV
+            tmpsum += WPreSim[i, j] * evalAdjV[i];
+          end
+          simnull[j] = max(tmpsum / totalSumWConst[j], threshold);
         end
-        simnull[j] = max(tmpsum / totalSumWConst[j], threshold);
+      else
+        simnull = Array(Float64, nPtsChi2);
+        counter = 0;
+        for j = 1 : nSimPts
+          tmpsum = 0.0;
+          for i = 1 : rankAdjV
+            tmpsum += WPreSim[i, j] * evalAdjV[i];
+          end
+          tmpvalue = tmpsum / totalSumWConst[j];
+          if tmpvalue > threshold
+            counter += 1;
+            if counter <= nPtsChi2
+              simnull[counter] = tmpvalue;
+            end
+          end
+        end
+        patzero = (nSimPts - counter) / nSimPts;
       end
 
     end
@@ -306,10 +325,6 @@ function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
       pvalue = countnz(simnull .>= teststat) / length(simnull);
       return pvalue;
     elseif pvalueComputing == "chi2"
-      if test == "eScore"
-        error("vctestnullsim:notSupportedMode\n",
-              "You can only use MonteCarlo mode for the p-value calculation of score test");
-      end
       ahat = var(simnull) / (2 * mean(simnull));
       bhat = 2 * (mean(simnull) ^ 2) / var(simnull);
       if mean(simnull) == 0 && var(simnull) == 0
