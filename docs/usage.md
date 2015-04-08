@@ -93,7 +93,7 @@ The default value for option `test` is *eRLRT*.
 Option `pvalueComputing` indicates which method will be used to obtain the null distribution of test statistic. The usage is
 
 * `gwasvctest(pvalueComputing = "MonteCarlo")`: use a Monte Carlo method by generating many replicates to obtain the exact null distribution of test statistic
-* `gwasvctest(pvalueComputing = "chi2")`: use a mixed Chi squared distribution to approximate the null distribution of test statistic. Only valid under **eLRT** or **eRLRT**
+* `gwasvctest(pvalueComputing = "chi2")`: use a mixed Chi squared distribution to approximate the null distribution of test statistic.
 
 The default value for option `pvalueComputing` is *chi2*. The approximation effect of mixed Chi squared distribution has been showed to be good enough, and such approximation will be faster than Monte Carlo method since much less replicates need to be generated. So please use *chi2* whenever possible.
 

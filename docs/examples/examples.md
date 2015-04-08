@@ -34,10 +34,10 @@ julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.
 
 ```julia
 julia> using ExactVarianceComponentTest
-julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eScore", pvalueComputing = "MonteCarlo")
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eScore")
 ```
 
-**Note**: 1) option `pvalueComputing` must be *MonteCarlo* under eSC. 2) if the input files are not at the current directory, you should specify the paths correctly.
+**Note**: if the input files are not at the current directory, you should specify the paths correctly.
 
 You can also call *gwasvctest* from command line. For example, to perform eRLRT
 
@@ -48,18 +48,18 @@ $ julia -E 'using ExactVarianceComponentTest; gwasvctest(plinkFile = "chr3-geno-
 ---
 ## Option `pvalueComputing`
 
-For eLRT and eRLRT, Chi squared approximation is recommended (though you don't have to write it out specifically)
+Chi squared approximation is recommended (though you don't have to write it out specifically)
 
 ```julia
 julia> using ExactVarianceComponentTest
 julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT", pvalueComputing = "chi2")
 ```
 
-For eSC, Monte Carlo method is the only option
+If you want to use Monte Carlo method
 
 ```julia
 julia> using ExactVarianceComponentTest
-julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eScore", pvalueComputing = "MonteCarlo")
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT", pvalueComputing = "MonteCarlo")
 ```
 
 ---
@@ -69,7 +69,7 @@ If Monte Carlo method is chosen and you want to increase the precision of p-valu
 
 ```julia
 julia> using ExactVarianceComponentTest
-julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eScore", pvalueComputing = "MonteCarlo", nNullSimPts = 100000)
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT", pvalueComputing = "MonteCarlo", nNullSimPts = 100000)
 ```
 
 ---
