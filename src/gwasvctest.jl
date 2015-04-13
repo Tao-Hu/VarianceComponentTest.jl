@@ -88,7 +88,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
   nPer = length(famdata[:, 1]);
 
   # prepare for reading binary data
-  map2geno = [2; 1; NaN; 0];
+  map2geno = [2; NaN; 1; 0];
   bin2geno = Array(Float64, 4, 2 ^ 8);
   countbin = 1;
   for iB4 = 0 : 3
