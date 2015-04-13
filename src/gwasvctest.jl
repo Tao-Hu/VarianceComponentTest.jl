@@ -70,7 +70,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
                     pvalueComputing::String = "chi2", windowSize::Int = 50,
                     annotationFile::String = "")
 
-  blas_set_num_threads(4);
+  #blas_set_num_threads(4);
 
   ## parse data from files
   plinkBedfile = string(plinkFile, ".bed");
@@ -267,8 +267,26 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
   elseif kinship == "theoretical"
 
     # use theoretical kinship computed from pedigree information
-    #??? to be done ???
-    # use the kinship function by Lange
+    # use the kinship function provided by Lange
+    IndID = famdata[:, 2];
+    AugIndID = unique([famdata[:, 2]; famdata[:, 3]; famdata[:, 4]]);
+    AugIndID = AugIndID[AugIndID .!= 0];
+    AugIndID = sort(AugIndID);
+    keepIdx = findin(AugIndID, IndID);
+    vals = [1 : length(AugIndID)];
+    IndDict = Dict(AugIndID, vals);
+    faID = famdata[:, 3];
+    moID = famdata[:, 4];
+    father = zeros(Int64, length(AugIndID));
+    mother = zeros(Int64, length(AugIndID));
+    for i = 1 : nPer
+      if faID[i] != 0
+        father[keepIdx[i]] = IndDict[faID[i]];
+        mother[keepIdx[i]] = IndDict[moID[i]];
+      end
+    end
+    kinMat = kinshipcoef(father, mother, 1, length(AugIndID));
+    kinMat = kinMat[keepIdx, keepIdx];
 
   elseif kinship != "none"
 
@@ -894,11 +912,11 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
         snpSqrtWts = ones(grpSize);
       elseif snpWtType == "beta"
         # weights by beta density evaluated at MAF
-        snpSqrtWts = sqrt(pdf(Beta(1, 25), maf[gLB[g] : gUB[g]]));
+        snpSqrtWts = sqrt(pdf(Beta(1, 25), maf[1 : grpSize]));
       elseif snpWtType == "invvar"
         # weights by inverse variance maf*(1-maf)
-        snpSqrtWts = 1 ./ sqrt( maf[gLB[g] : gUB[g]] .*
-                               (1 - maf[gLB[g] : gUB[g]]) );
+        snpSqrtWts = 1 ./ sqrt( maf[1 : grpSize] .*
+                               (1 - maf[1 : grpSize]) );
       end
 
       # retrieve group genotypes
@@ -915,19 +933,19 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
         #gSNP = gSNP .* (snpSqrtWts ./ sqrt(2 * gMAF .* (1 - gMAF)))';
       elseif kernel == "IBS1"
         # Table 3 in notes
-        gSNP = hcat(geno[keepIdx, gLB[g] : gUB[g]],
-                    2 - geno[keepIdx, gLB[g] : gUB[g]]);
+        gSNP = hcat(geno[keepIdx, 1 : grpSize],
+                    2 - geno[keepIdx, 1 : grpSize]);
         scale!(gSNP, [snpSqrtWts; snpSqrtWts]);
       elseif kernel == "IBS2"
         # Table 2 in notes
-        gSNP = hcat(geno[keepIdx, gLB[g] : gUB[g]] .>= 1,
-                    geno[keepIdx, gLB[g] : gUB[g]] .<= 1);
+        gSNP = hcat(geno[keepIdx, 1 : grpSize] .>= 1,
+                    geno[keepIdx, 1 : grpSize] .<= 1);
         scale!(gSNP, [snpSqrtWts; snpSqrtWts]);
       elseif kernel == "IBS3"
         # Table 1 in notes
-        gSNP = hcat(-2 * (geno[keepIdx, gLB[g] : gUB[g]] .<= 1) + 1,
-                    2 * (geno[keepIdx, gLB[g] : gUB[g]] .>= 1) - 1,
-                    fill(sqrt(2), nPerKeep, gUB[g] - gLB[g] + 1));
+        gSNP = hcat(-2 * (geno[keepIdx, 1 : grpSize] .<= 1) + 1,
+                    2 * (geno[keepIdx, 1 : grpSize] .>= 1) - 1,
+                    fill(sqrt(2), nPerKeep, grpSize));
         scale!(gSNP, [snpSqrtWts; snpSqrtWts; snpSqrtWts]);
       end
 
