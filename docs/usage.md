@@ -57,13 +57,22 @@ If option `covFile` is not specified, the covariates matrix **X** will be automa
 ---
 ## Specify input trait file
 
-Option `traitFile` indicates the file name for input trait file. If the trait file is *y.txt*, then use
+Option `traitFile` indicates the file name for the input trait file. If the trait file is *y.txt*, then use
 
 ```julia
 gwasvctest(traitFile = "/PATH/OF/y.txt")
 ```
 
 If option `traitFile` is not specified, the response vector **y** will be set automatically to the phenotypes obtained from the **.fam** PLINK file.
+
+---
+## Specify input annotation file
+
+Option `annotationFile` indicates the file name for the input annotation file. If the annotation file is *annotation.txt*, then use
+
+```julia
+gwasvctest(annotationFile = "/PATH/OF/annotation.txt")
+```
 
 ---
 ## Specify output file
@@ -154,3 +163,5 @@ For example, want to set the group size to 60, then
 ```julia
 gwasvctest(windowSize = 60)
 ```
+
+Note that if annotation file is provided, the group size will be determined automatically, so you don't need to specify `windowSize` in that case.
