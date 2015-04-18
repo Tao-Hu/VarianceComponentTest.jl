@@ -70,7 +70,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
                     pvalueComputing::String = "chi2", windowSize::Int = 50,
                     annotationFile::String = "")
 
-  #blas_set_num_threads(4);
+  blas_set_num_threads(4);
 
   ## parse data from files
   plinkBedfile = string(plinkFile, ".bed");
@@ -78,10 +78,14 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
   plinkFamfile = string(plinkFile, ".fam");
 
   # BIM file: chr, rs#, morgan, bp position, allele1, allele2
-  bimdata = readdlm(plinkBimfile);
+  bimdata = readdlm(plinkBimfile, String);
+  chrID = bimdata[:, 1];
+  #chrID = convert(Array{String, 1}, chrID);
   snpID = bimdata[:, 2];
-  snpID = convert(Array{String, 1}, snpID);
+  #snpID = convert(Array{String, 1}, snpID);
   nSNP = length(snpID);
+  snpPos = bimdata[:, 4];
+  #snpPos = convert(Array{String, 1}, snpPos);
 
   # FAM file: fam ID, ind ID, father ID, mother ID, sex, phenotype
   famdata = readdlm(plinkFamfile);
@@ -149,10 +153,12 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     flagAnnotate = true;
     grpInfo = zeros(Int64, nSNP);
     offsetSize = zeros(Int64, nSNP);
-    readAnnotate!(annotationFile, snpID, nSNP, grpInfo, offsetSize);
+    geneName = Array(String, nSNP);
+    readAnnotate!(annotationFile, snpID, nSNP, grpInfo, offsetSize, geneName);
     grpInfo = grpInfo[grpInfo .> 0];
     nGrp = length(grpInfo);
     offsetSize = offsetSize[1 : nGrp];
+    geneName = geneName[1 : nGrp];
   end
 
 
@@ -309,13 +315,13 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     # user supplied trait values (only take the first column) in Plink
     # phenotype file (no headerline) format: FamID IndID Trait1 Trait2 ...
     # Only Trait1 will be read
-    y = readdlm(traitFile);
+    y = readdlm(traitFile, Float64);
     if size(y, 1) != nPer
       error("gwasvctest:ywrongn\n",
             "# individuals in trait file does not match plink files");
     end
     y = y[:, 3];
-    y = convert(Array{Float64, 1}, y);
+    #y = convert(Array{Float64, 1}, y);
   end
 
   ## get covariates
@@ -324,13 +330,13 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     X = ones(nPer, 1);
   else
     # user provided covariates (intercept if exists has to be provided)
-    X = readdlm(covFile);
+    X = readdlm(covFile, Float64);
     if size(X, 1) != nPer
       error("gwasvctest:covwrongn\n",
             "# individuals in covariate file does not match plink files");
     end
     X = [ones(nPer, 1) X[:, 3:end]];
-    X = convert(Array{Float64, 2}, X);
+    #X = convert(Array{Float64, 2}, X);
   end
 
   ## individuals with misisng phenotype are removed from analysis
@@ -372,6 +378,8 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
       end
       grpInfo = [grpInfo[1:tmpidx-1]; tmpgrpInfo; grpInfo[tmpidx+1:end]];
       offsetSize = [offsetSize[1:tmpidx-1]; tmpoffsetSize; offsetSize[tmpidx+1:end]];
+      geneName = vcat(geneName[1:tmpidx-1], repmat([geneName[tmpidx]], innerItr, 1),
+                      geneName[tmpidx+1:end]);
     end
 
     windowSize = maximum(grpInfo);
@@ -515,7 +523,11 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     outFile = string(plinkFile, "-julia.out");
   end
   fid = open(outFile, "w");
-  println(fid, "StartSNP,EndSNP,pvalue");
+  if !flagAnnotate
+    println(fid, "StartSNP,EndSNP,pvalue");
+  else
+    println(fid, "StartSNP,EndSNP,Chr,StartPos,EndPos,GeneName,#SNPs,pvalue");
+  end
   close(fid);
 
 
@@ -552,6 +564,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     geno = Array(Float64, nPer, windowSize);
     genoOri = Array(Float64, nPer, windowSize);
     snpIDred = Array(String, windowSize);
+    snpPosred = Array(String, windowSize);
     mafOri = Array(Float64, windowSize);
     maf = Array(Float64, windowSize);
     sumIsnan = Array(Float64, 1, windowSize);
@@ -876,6 +889,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
           counter += 1;
           maf[counter] = mafOri[i];
           snpIDred[counter] = snpID[i + offset];
+          snpPosred[counter] = snpPos[i + offset];
           pGenoOri = pointer(genoOri) + (i - 1) * nPer * sizeof(Float64);
           pGeno = pointer(geno) + (counter - 1) * nPer * sizeof(Float64);
           BLAS.blascopy!(nPer, pGenoOri, 1, pGeno, 1);
@@ -1032,7 +1046,9 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
 
       # write output
       fid = open(outFile, "a");
-      println(fid, snpIDred[1], ",", snpIDred[counter], ",", pvalList);
+      println(fid, snpIDred[1], ",", snpIDred[counter], ",", chrID[offset + 1],
+              ",", snpPosred[1], ",", snpPosred[counter], ",", geneName[idxRead],
+              ",", curSNPSize, ",", pvalList);
       close(fid);
 
     end

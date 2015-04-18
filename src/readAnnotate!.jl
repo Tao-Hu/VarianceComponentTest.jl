@@ -1,6 +1,6 @@
 function readAnnotate!(annotationFile::String, snpID::Vector{String},
                        nSNP::Int, grpInfo::Vector{Int64},
-                       offsetSize::Vector{Int64})
+                       offsetSize::Vector{Int64}, geneName::Vector{String})
 
   annotatedata = readdlm(annotationFile, ',');
   annotatedata = convert(Array{String, 2}, annotatedata);
@@ -28,6 +28,7 @@ function readAnnotate!(annotationFile::String, snpID::Vector{String},
     else
       nGrp += 1;
       grpInfo[nGrp] += 1;
+      geneName[nGrp] = curgene;
       if nGrp > 1
         offsetSize[nGrp] = offsetSize[nGrp - 1] + grpInfo[nGrp - 1];
       end
