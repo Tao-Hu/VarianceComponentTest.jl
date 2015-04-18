@@ -126,6 +126,12 @@ In annotation file, each line represents a marker and its annotation information
 Fields are separated by a comma. A typical trait file looks like
 
 ```
+gene1,3-47892183
+gene1,3-47892350
+gene1,3-47892383
+gene2,3-47892431
+gene2,3-47892574
+...
 ```
 
 ---
@@ -147,7 +153,7 @@ For example, if a data set contains 5 individuals, the kinship file looks like
 
 Output file is a flat file which contains p-values and other information for each group of markers under certain testing scheme. In output file, each line represents for one group of markers (the first line is the header). There are two formats of the output file: one is for the case when no annotation file is provided, the other is for the case when an annotation file is provided.
 
-1. No annotation file provided
+#### No annotation file provided
 
 The fields in output file are
 
@@ -167,7 +173,7 @@ StartSNP,EndSNP,pvalue
 ...
 ```
 
-2. Annotation file provided
+#### Annotation file provided
 
 The fields in output file are
 

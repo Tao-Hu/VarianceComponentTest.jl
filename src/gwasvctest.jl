@@ -315,13 +315,13 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     # user supplied trait values (only take the first column) in Plink
     # phenotype file (no headerline) format: FamID IndID Trait1 Trait2 ...
     # Only Trait1 will be read
-    y = readdlm(traitFile, Float64);
+    y = readdlm(traitFile);
     if size(y, 1) != nPer
       error("gwasvctest:ywrongn\n",
             "# individuals in trait file does not match plink files");
     end
     y = y[:, 3];
-    #y = convert(Array{Float64, 1}, y);
+    y = convert(Array{Float64, 1}, y);
   end
 
   ## get covariates
@@ -330,13 +330,13 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     X = ones(nPer, 1);
   else
     # user provided covariates (intercept if exists has to be provided)
-    X = readdlm(covFile, Float64);
+    X = readdlm(covFile);
     if size(X, 1) != nPer
       error("gwasvctest:covwrongn\n",
             "# individuals in covariate file does not match plink files");
     end
     X = [ones(nPer, 1) X[:, 3:end]];
-    #X = convert(Array{Float64, 2}, X);
+    X = convert(Array{Float64, 2}, X);
   end
 
   ## individuals with misisng phenotype are removed from analysis

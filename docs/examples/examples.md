@@ -5,6 +5,7 @@ This example illustrates the usages of different options by analyzing a small da
 * PLINK file: `chr3-geno-MAP4-849.bed`, `chr3-geno-MAP4-849.bim` and `chr3-geno-MAP4-849.fam`
 * Covariates file: `covariates-julia.txt` which contains 5 covariates and intercept
 * Trait file: `y-julia.txt`
+* Annotation file: `annotation.txt`
 * Kinship file: `gaw18_849_kinship.txt`
 
 These data files come with our package.
@@ -73,13 +74,23 @@ julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.
 ```
 
 ---
+## Option `annotationFile`
+
+If the annotation information of the markers is available, you can share it by inputting an annotation file with option `annotationFile`
+
+```julia
+julia> using ExactVarianceComponentTest
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT", annotationFile = "annotation.txt")
+```
+
+---
 ## Option `kinship`
 
 It's okay if you don't have the kinship file
 
 ```julia
 julia> using ExactVarianceComponentTest
-julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT", kinship = "GRM")
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", test = "eRLRT", kinship = "GRM")
 ```
 
 ---
