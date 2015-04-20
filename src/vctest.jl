@@ -1,29 +1,31 @@
-function vctest(y, X, V; bInit::Array{Float64, 1} = Float64[],
-                devices::String = "CPU", nMMmax::Int = 0,
-                nBlockAscent::Int = 1000, nNullSimPts::Int = 10000,
-                nNullSimNewtonIter::Int = 15, tests::String = "eLRT",
-                tolX::Float64 = 1e-6, vcInit::Array{Float64, 1} = Float64[],
-                Vform::String = "whole", pvalueComputings::String = "chi2",
-                WPreSim::Array{Float64, 2} = [Float64[] Float64[]],
-                PrePartialSumW::Array{Float64, 2} = [Float64[] Float64[]],
-                PreTotalSumW::Array{Float64, 2} = [Float64[] Float64[]],
-                partialSumWConst::Array{Float64, 1} = Float64[],
-                totalSumWConst::Array{Float64, 1} = Float64[],
-                windowSize::Int = 50,
-                partialSumW::Array{Float64, 1} = Float64[],
-                totalSumW::Array{Float64, 1} = Float64[],
-                lambda::Array{Float64, 2} = [Float64[] Float64[]],
-                W::Array{Float64, 2} = [Float64[] Float64[]],
-                nPreRank::Int = 20,
-                tmpmat0::Array{Float64, 2} = [Float64[] Float64[]],
-                tmpmat1::Array{Float64, 2} = [Float64[] Float64[]],
-                tmpmat2::Array{Float64, 2} = [Float64[] Float64[]],
-                tmpmat3::Array{Float64, 2} = [Float64[] Float64[]],
-                tmpmat4::Array{Float64, 2} = [Float64[] Float64[]],
-                tmpmat5::Array{Float64, 2} = [Float64[] Float64[]],
-                denomvec::Array{Float64, 1} = Float64[],
-                d1f::Array{Float64, 1} = Float64[],
-                d2f::Array{Float64, 1} = Float64[], offset::Int = 0)
+@everywhere function vctest(y, X, V; bInit::Array{Float64, 1} = Float64[],
+                            devices::String = "CPU", nMMmax::Int = 0,
+                            nBlockAscent::Int = 1000, nNullSimPts::Int = 10000,
+                            nNullSimNewtonIter::Int = 15, tests::String = "eLRT",
+                            tolX::Float64 = 1e-6,
+                            vcInit::Array{Float64, 1} = Float64[],
+                            Vform::String = "whole",
+                            pvalueComputings::String = "chi2",
+                            WPreSim::Array{Float64, 2} = [Float64[] Float64[]],
+                            PrePartialSumW::Array{Float64, 2} = [Float64[] Float64[]],
+                            PreTotalSumW::Array{Float64, 2} = [Float64[] Float64[]],
+                            partialSumWConst::Array{Float64, 1} = Float64[],
+                            totalSumWConst::Array{Float64, 1} = Float64[],
+                            windowSize::Int = 50,
+                            partialSumW::Array{Float64, 1} = Float64[],
+                            totalSumW::Array{Float64, 1} = Float64[],
+                            lambda::Array{Float64, 2} = [Float64[] Float64[]],
+                            W::Array{Float64, 2} = [Float64[] Float64[]],
+                            nPreRank::Int = 20,
+                            tmpmat0::Array{Float64, 2} = [Float64[] Float64[]],
+                            tmpmat1::Array{Float64, 2} = [Float64[] Float64[]],
+                            tmpmat2::Array{Float64, 2} = [Float64[] Float64[]],
+                            tmpmat3::Array{Float64, 2} = [Float64[] Float64[]],
+                            tmpmat4::Array{Float64, 2} = [Float64[] Float64[]],
+                            tmpmat5::Array{Float64, 2} = [Float64[] Float64[]],
+                            denomvec::Array{Float64, 1} = Float64[],
+                            d1f::Array{Float64, 1} = Float64[],
+                            d2f::Array{Float64, 1} = Float64[], offset::Int = 0)
   # VCTEST Fit and test for the nontrivial variance component
   #
   # [SIMNULL] = VCTEST(y,X,V) fits and then tests for $H_0:sigma_1^2=0$ in
@@ -50,12 +52,6 @@ function vctest(y, X, V; bInit::Array{Float64, 1} = Float64[],
   #       vc0 - estiamted variance component for I
   #       vc1 - estiamted variance component for V
   #       stats - other statistics
-
-  # include correlated files
-  #include("typedef.jl");
-  #include("vctestnullsim.jl");
-
-  stats = Stats();
 
   # check dimensionalities
   n = length(y);
@@ -234,38 +230,29 @@ function vctest(y, X, V; bInit::Array{Float64, 1} = Float64[],
     statLRT = 2 * (logLikeAlt - logLikeNull);
 
     # obtain p-value for testing vc1=0
-    stats.vc1_pvalue = vctestnullsim(statLRT, evalV, evalAdjV, n, rankX,
-                                     WPreSim, device = devices,
-                                     nSimPts = nNullSimPts,
-                                     nNewtonIter = nNullSimNewtonIter,
-                                     test = "eLRT",
-                                     pvalueComputing = pvalueComputings,
-                                     PrePartialSumW = PrePartialSumW,
-                                     PreTotalSumW = PreTotalSumW,
-                                     partialSumWConst = partialSumWConst,
-                                     totalSumWConst = totalSumWConst,
-                                     windowSize = windowSize,
-                                     partialSumW = partialSumW,
-                                     totalSumW = totalSumW,
-                                     lambda = lambda, W = W,
-                                     nPreRank = nPreRank,
-                                     tmpmat0 = tmpmat0, tmpmat1 = tmpmat1,
-                                     tmpmat2 = tmpmat2, tmpmat3 = tmpmat3,
-                                     tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
-                                     denomvec = denomvec,
-                                     d1f = d1f, d2f = d2f, offset = offset);
-    stats.vc1_pvalue_se = sqrt(stats.vc1_pvalue * (1 - stats.vc1_pvalue) /
-                                 nNullSimPts);
-    stats.vc1_teststat = statLRT;
-
-    # collect some statistics
-    stats.iterations = nIters;
-    stats.method = "MLE";
-    stats.residual = r;
-    stats.test = "eLRT";
+    vc1_pvalue = vctestnullsim(statLRT, evalV, evalAdjV, n, rankX,
+                               WPreSim, device = devices,
+                               nSimPts = nNullSimPts,
+                               nNewtonIter = nNullSimNewtonIter,
+                               test = "eLRT",
+                               pvalueComputing = pvalueComputings,
+                               PrePartialSumW = PrePartialSumW,
+                               PreTotalSumW = PreTotalSumW,
+                               partialSumWConst = partialSumWConst,
+                               totalSumWConst = totalSumWConst,
+                               windowSize = windowSize,
+                               partialSumW = partialSumW,
+                               totalSumW = totalSumW,
+                               lambda = lambda, W = W,
+                               nPreRank = nPreRank,
+                               tmpmat0 = tmpmat0, tmpmat1 = tmpmat1,
+                               tmpmat2 = tmpmat2, tmpmat3 = tmpmat3,
+                               tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
+                               denomvec = denomvec,
+                               d1f = d1f, d2f = d2f, offset = offset);
 
     # return values
-    return b, vc0, vc1, stats;
+    return b, vc0, vc1, vc1_pvalue;
 
   elseif tests == "eRLRT"
 
@@ -359,28 +346,26 @@ function vctest(y, X, V; bInit::Array{Float64, 1} = Float64[],
     statRLRT = 2 * (logLikeAlt - logLikeNull);
 
     # obtain p-value for testing vc1=0
-    stats.vc1_pvalue = vctestnullsim(statRLRT, evalV, evalAdjV, n, rankX,
-                                     WPreSim, device = devices,
-                                     nSimPts = nNullSimPts,
-                                     nNewtonIter = nNullSimNewtonIter,
-                                     test = "eRLRT",
-                                     pvalueComputing = pvalueComputings,
-                                     PrePartialSumW = PrePartialSumW,
-                                     PreTotalSumW = PreTotalSumW,
-                                     partialSumWConst = partialSumWConst,
-                                     totalSumWConst = totalSumWConst,
-                                     windowSize = windowSize,
-                                     partialSumW = partialSumW,
-                                     totalSumW = totalSumW,
-                                     lambda = lambda, W = W,
-                                     nPreRank = nPreRank,
-                                     tmpmat0 = tmpmat0, tmpmat1 = tmpmat1,
-                                     tmpmat2 = tmpmat2, tmpmat3 = tmpmat3,
-                                     tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
-                                     denomvec = denomvec,
-                                     d1f = d1f, d2f = d2f, offset = offset);
-    stats.vc1_pvalue_se = sqrt(stats.vc1_pvalue * (1 - stats.vc1_pvalue) /
-                                 nNullSimPts);
+    vc1_pvalue = vctestnullsim(statRLRT, evalV, evalAdjV, n, rankX,
+                               WPreSim, device = devices,
+                               nSimPts = nNullSimPts,
+                               nNewtonIter = nNullSimNewtonIter,
+                               test = "eRLRT",
+                               pvalueComputing = pvalueComputings,
+                               PrePartialSumW = PrePartialSumW,
+                               PreTotalSumW = PreTotalSumW,
+                               partialSumWConst = partialSumWConst,
+                               totalSumWConst = totalSumWConst,
+                               windowSize = windowSize,
+                               partialSumW = partialSumW,
+                               totalSumW = totalSumW,
+                               lambda = lambda, W = W,
+                               nPreRank = nPreRank,
+                               tmpmat0 = tmpmat0, tmpmat1 = tmpmat1,
+                               tmpmat2 = tmpmat2, tmpmat3 = tmpmat3,
+                               tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
+                               denomvec = denomvec,
+                               d1f = d1f, d2f = d2f, offset = offset);
 
     # estimate fixed effects
     if isempty(X)
@@ -394,17 +379,8 @@ function vctest(y, X, V; bInit::Array{Float64, 1} = Float64[],
       b = Xnew \ ynew;
     end
 
-    # collect some statistics
-    stats.iterations = nIters;
-    stats.method = "REML";
-    #stats.residual = y - X * b;
-    stats.residual = y;
-    BLAS.gemv!('N', -1.0, X, b, 1.0, stats.residual);
-    stats.test = "eRLRT";
-    stats.vc1_teststat = statRLRT;
-
     # return values
-    return b, vc0, vc1, stats;
+    return b, vc0, vc1, vc1_pvalue;
 
   elseif tests == "eScore"
 
@@ -418,38 +394,29 @@ function vctest(y, X, V; bInit::Array{Float64, 1} = Float64[],
     statScore = norm(r' * sqrtV) ^ 2 / norm(r) ^ 2;
 
     # obtain p-value for testing vc1=0
-    stats.vc1_pvalue = vctestnullsim(statScore, evalV, evalAdjV, n, rankX,
-                                     WPreSim, test = "eScore",
-                                     nSimPts = nNullSimPts,
-                                     pvalueComputing = pvalueComputings,
-                                     nNewtonIter = nNullSimNewtonIter,
-                                     device = devices,
-                                     PrePartialSumW = PrePartialSumW,
-                                     PreTotalSumW = PreTotalSumW,
-                                     partialSumWConst = partialSumWConst,
-                                     totalSumWConst = totalSumWConst,
-                                     windowSize = windowSize,
-                                     partialSumW = partialSumW,
-                                     totalSumW = totalSumW,
-                                     lambda = lambda, W = W,
-                                     nPreRank = nPreRank,
-                                     tmpmat0 = tmpmat0, tmpmat1 = tmpmat1,
-                                     tmpmat2 = tmpmat2, tmpmat3 = tmpmat3,
-                                     tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
-                                     denomvec = denomvec,
-                                     d1f = d1f, d2f = d2f, offset = offset);
-    stats.vc1_pvalue_se = sqrt(stats.vc1_pvalue * (1 - stats.vc1_pvalue) /
-                                 nNullSimPts);
-
-    # collect some statistics
-    stats.iterations = 0;
-    stats.method = "null";
-    stats.residual = r;
-    stats.test = "eScore";
-    stats.vc1_teststat = statScore;
+    vc1_pvalue = vctestnullsim(statScore, evalV, evalAdjV, n, rankX,
+                               WPreSim, test = "eScore",
+                               nSimPts = nNullSimPts,
+                               pvalueComputing = pvalueComputings,
+                               nNewtonIter = nNullSimNewtonIter,
+                               device = devices,
+                               PrePartialSumW = PrePartialSumW,
+                               PreTotalSumW = PreTotalSumW,
+                               partialSumWConst = partialSumWConst,
+                               totalSumWConst = totalSumWConst,
+                               windowSize = windowSize,
+                               partialSumW = partialSumW,
+                               totalSumW = totalSumW,
+                               lambda = lambda, W = W,
+                               nPreRank = nPreRank,
+                               tmpmat0 = tmpmat0, tmpmat1 = tmpmat1,
+                               tmpmat2 = tmpmat2, tmpmat3 = tmpmat3,
+                               tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
+                               denomvec = denomvec,
+                               d1f = d1f, d2f = d2f, offset = offset);
 
     # return values
-    return b, vc0, vc1, stats;
+    return b, vc0, vc1, vc1_pvalue;
 
   end
 

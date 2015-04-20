@@ -102,3 +102,22 @@ If you are concerning about too high approximating rank, use option `infLambda` 
 julia> using ExactVarianceComponentTest
 julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT", infLambda = 1.0)
 ```
+
+---
+## Parallel computing
+
+If your machine has multiple cores, and annotation file is available, you can active the parallel computing mode to speed up the calculations. For example, you want to distribute the computings to 4 processes
+
+```julia
+julia> addprocs(4)
+julia> @everywhere using ExactVarianceComponentTest
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT", annotationFile = "annotation.txt")
+```
+
+You can also call the function from command line
+
+```
+$ julia -p 4 -E '@everywhere using ExactVarianceComponentTest; gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT", annotationFile = "annotation.txt")'
+```
+
+**Note**: annotation file must be provided if you want to take advantage of parallel computing.

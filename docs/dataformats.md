@@ -88,7 +88,7 @@ Covariates file is a text file which contains the values of covariates. In covar
 ...
 ```
 
-If a specific covariate value is missing, please use "NaN" or "NA" to indicate that missing value
+If a specific covariate value is missing, please use "NaN" to indicate that missing value
 
 If no covariates file is provided, the covariates matrix **X** will be automatically set to a *n*-by-1 matrix with all elements equal to 1, where *n* is the number of individuals.
 
@@ -99,7 +99,7 @@ Trait file is a text file which contains the values of traits/phenotypes. In tra
 
 * Family ID
 * Individual ID
-* Trait value ("NaN" or "NA" for missing value)
+* Trait value ("NaN" for missing value)
 
 Fields are separated by a whitespace. A typical trait file looks like
 

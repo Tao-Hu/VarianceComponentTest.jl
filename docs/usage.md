@@ -165,3 +165,32 @@ gwasvctest(windowSize = 60)
 ```
 
 Note that if annotation file is provided, the group size will be determined automatically, so you don't need to specify `windowSize` in that case.
+
+---
+## Parallelization
+
+Modern computer has multiple cores usually. So you can take advantage of the parallel computing mode provided by this package
+
+```julia
+julia> addprocs(n)
+julia> using ExactVarianceComponentTest
+julia> gwasvctest(Name = Value)
+```
+
+where *n* is the number of working processes which are employed to perform the computations. Usually, *n* is the number of cores your machine has.
+
+You can also active the parallel mode from command line
+
+```
+$ julia -p n -E 'using ExactVarianceComponentTest; gwasvctest(Name = Value)'
+```
+
+where *n* has the same meaning as above.
+
+Currently, the parallel computing mode is only supported when annotation file is provided. A concrete example is provided at the Example part.
+
+**Note**: In Linux system, you can use the following shell command to count the number of cores on your CPU
+
+```
+$ cat /proc/cpuinfo | grep processor | wc -l
+```

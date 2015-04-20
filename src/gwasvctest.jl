@@ -70,8 +70,6 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
                     pvalueComputing::String = "chi2", windowSize::Int = 50,
                     annotationFile::String = "")
 
-  blas_set_num_threads(4);
-
   ## parse data from files
   plinkBedfile = string(plinkFile, ".bed");
   plinkBimfile = string(plinkFile, ".bim");
@@ -80,12 +78,9 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
   # BIM file: chr, rs#, morgan, bp position, allele1, allele2
   bimdata = readdlm(plinkBimfile, String);
   chrID = bimdata[:, 1];
-  #chrID = convert(Array{String, 1}, chrID);
   snpID = bimdata[:, 2];
-  #snpID = convert(Array{String, 1}, snpID);
   nSNP = length(snpID);
   snpPos = bimdata[:, 4];
-  #snpPos = convert(Array{String, 1}, snpPos);
 
   # FAM file: fam ID, ind ID, father ID, mother ID, sex, phenotype
   famdata = readdlm(plinkFamfile);
@@ -340,9 +335,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
   end
 
   ## individuals with misisng phenotype are removed from analysis
-  # missing covariate values are imputed by avarages
-  # Possible solution for speed up: remove the individuals with missing
-  # phenotype in advance
+  ## missing covariate values are imputed by avarages
 
   keepIdx = !isnan(y);
   nPerKeep = countnz(keepIdx);
@@ -402,7 +395,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
       Xsvd = svdfact(X, thin = false);
       rankX = countnz(Xsvd[:S] .> nPerKeep * eps(Xsvd[:S][1]));
       XtNullBasis = Xsvd[:U][:, rankX + 1 : end]';
-      ynew = y;
+      @everywhere ynew = y;
       BLAS.gemv!('N', 1.0, XtNullBasis, y, 0.0, ynew);
     end
 
@@ -531,24 +524,24 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
   close(fid);
 
 
-  ## test group by group
+  #### test group by group
 
-  QRes = Array(Float64, nPerKeep, rankQPhi);
-  nSNPredVec = fill(0, nReads);
-  nActualSNP = 0;
-  snpSqrtWts = Float64[];
-  gMAF = Float64[];
-  gSNP = Float64[];
-  tmpvec = similar(yShift);
-  tmpvecQRes = Array(Float64, rankQPhi);
-  yWork = similar(evalPhiAdj);
-  partialSumWConst = Array(Float64, nNullSimPts);
-  totalSumWConst = Array(Float64, nNullSimPts);
-  subXPhitSV = Array(Float64, size(XPhitNullBasis, 2), rankQPhi);
-  pSubXPhitSV = pointer(subXPhitSV);
-  offset = 0;
-  oneConst = ones(nPerKeep);
+  ## no annotation file
+
   if !flagAnnotate
+
+    QRes = Array(Float64, nPerKeep, rankQPhi);
+    nSNPredVec = fill(0, nReads);
+    snpSqrtWts = Float64[];
+    tmpvec = similar(yShift);
+    tmpvecQRes = Array(Float64, rankQPhi);
+    yWork = similar(evalPhiAdj);
+    partialSumWConst = Array(Float64, nNullSimPts);
+    totalSumWConst = Array(Float64, nNullSimPts);
+    subXPhitSV = Array(Float64, size(XPhitNullBasis, 2), rankQPhi);
+    pSubXPhitSV = pointer(subXPhitSV);
+    offset = 0;
+    oneConst = ones(nPerKeep);
     geno = Array(Float64, nPer, SNPSize);
     genoOri = Array(Float64, nPer, SNPSize);
     snpIDred = similar(snpID);
@@ -560,48 +553,35 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     sumIsnan = Array(Float64, 1, SNPSize);
     nChrObs = Array(Float64, 1, SNPSize);
     tmpvecKernel = Array(Float64, windowSize);
-  else
-    geno = Array(Float64, nPer, windowSize);
-    genoOri = Array(Float64, nPer, windowSize);
-    snpIDred = Array(String, windowSize);
-    snpPosred = Array(String, windowSize);
-    mafOri = Array(Float64, windowSize);
-    maf = Array(Float64, windowSize);
-    sumIsnan = Array(Float64, 1, windowSize);
-    nChrObs = Array(Float64, 1, windowSize);
-  end
-  if pvalueComputing == "chi2"
-    partialSumW = Array(Float64, 300);
-    totalSumW = Array(Float64, 300);
-    lambda = Array(Float64, 1, 300);
-    W = Array(Float64, windowSize, 300);
-    tmpmat0 = Array(Float64, windowSize, 300);
-    tmpmat1 = Array(Float64, windowSize, 300);
-    tmpmat2 = Array(Float64, windowSize, 300);
-    tmpmat3 = Array(Float64, windowSize, 300);
-    tmpmat4 = Array(Float64, windowSize, 300);
-    tmpmat5 = Array(Float64, windowSize, 300);
-    denomvec = Array(Float64, 300);
-    d1f = Array(Float64, 300);
-    d2f = Array(Float64, 300);
-  else
-    partialSumW = Array(Float64, nNullSimPts);
-    totalSumW = Array(Float64, nNullSimPts);
-    lambda = Array(Float64, 1, nNullSimPts);
-    W = Array(Float64, windowSize, nNullSimPts);
-    tmpmat0 = Array(Float64, windowSize, nNullSimPts);
-    tmpmat1 = Array(Float64, windowSize, nNullSimPts);
-    tmpmat2 = Array(Float64, windowSize, nNullSimPts);
-    tmpmat3 = Array(Float64, windowSize, nNullSimPts);
-    tmpmat4 = Array(Float64, windowSize, nNullSimPts);
-    tmpmat5 = Array(Float64, windowSize, nNullSimPts);
-    denomvec = Array(Float64, nNullSimPts);
-    d1f = Array(Float64, nNullSimPts);
-    d2f = Array(Float64, nNullSimPts);
-  end
-
-  ## no annotation file
-  if !flagAnnotate
+    if pvalueComputing == "chi2"
+      partialSumW = Array(Float64, 300);
+      totalSumW = Array(Float64, 300);
+      lambda = Array(Float64, 1, 300);
+      W = Array(Float64, windowSize, 300);
+      tmpmat0 = Array(Float64, windowSize, 300);
+      tmpmat1 = Array(Float64, windowSize, 300);
+      tmpmat2 = Array(Float64, windowSize, 300);
+      tmpmat3 = Array(Float64, windowSize, 300);
+      tmpmat4 = Array(Float64, windowSize, 300);
+      tmpmat5 = Array(Float64, windowSize, 300);
+      denomvec = Array(Float64, 300);
+      d1f = Array(Float64, 300);
+      d2f = Array(Float64, 300);
+    else
+      partialSumW = Array(Float64, nNullSimPts);
+      totalSumW = Array(Float64, nNullSimPts);
+      lambda = Array(Float64, 1, nNullSimPts);
+      W = Array(Float64, windowSize, nNullSimPts);
+      tmpmat0 = Array(Float64, windowSize, nNullSimPts);
+      tmpmat1 = Array(Float64, windowSize, nNullSimPts);
+      tmpmat2 = Array(Float64, windowSize, nNullSimPts);
+      tmpmat3 = Array(Float64, windowSize, nNullSimPts);
+      tmpmat4 = Array(Float64, windowSize, nNullSimPts);
+      tmpmat5 = Array(Float64, windowSize, nNullSimPts);
+      denomvec = Array(Float64, nNullSimPts);
+      d1f = Array(Float64, nNullSimPts);
+      d2f = Array(Float64, nNullSimPts);
+    end
 
     for idxRead = 1 : nReads
 
@@ -642,7 +622,6 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
         end
       end
       nSNPredVec[idxRead] = curSNPSize - counter;
-      nActualSNP += counter;
 
       if counter == 0
         #println("No valid SNPs at the group which starting from row ",
@@ -671,7 +650,6 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
       vc0List = zeros(nGrps);
       vc1List = zeros(nGrps);
       pvalList = zeros(nGrps);
-      testStats = Stats();
 
       # looping over windows
       for g = 1 : nGrps
@@ -734,21 +712,20 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
         if kinship == "none"
 
           if test == "eRLRT"
-            (b, vc0List[g], vc1List[g], testStats) =
+            (b, vc0List[g], vc1List[g], pvalList[g]) =
               vctest(ynew, [], XtNullBasis * gSNP, WPreSim = WPreSim, tests = test,
                      Vform = "half", nBlockAscent = nBlockAscent, nMMmax = nMMmax,
                      nNullSimPts = nNullSimPts, pvalueComputings = pvalueComputing,
                      nNullSimNewtonIter = nNullSimNewtonIter, tolX = tolX,
                      devices = device);
           else
-            (b, vc0List[g], vc1List[g], testStats) =
+            (b, vc0List[g], vc1List[g], pvalList[g]) =
               vctest(y, X, gSNP, WPreSim = WPreSim, tests = test,
                      Vform = "half", nBlockAscent = nBlockAscent, nMMmax = nMMmax,
                      nNullSimPts = nNullSimPts, pvalueComputings = pvalueComputing,
                      nNullSimNewtonIter = nNullSimNewtonIter, tolX = tolX,
                      devices = device);
           end
-          pvalList[g] = testStats.vc1_pvalue;
 
         else
 
@@ -793,7 +770,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
           #scale!(InvSqrtevalPhiAdj, VWorkSqrt);
 
           # obtain LRT and p-value
-          (b, vc0List[g], vc1List[g], testStats) =
+          (b, vc0List[g], vc1List[g], pvalList[g]) =
             vctest(yWork, [], VWorkSqrt, WPreSim = WPreSim, tests = test,
                    Vform = "half", nBlockAscent = nBlockAscent, nMMmax = nMMmax,
                    nNullSimPts = nNullSimPts, pvalueComputings = pvalueComputing,
@@ -806,7 +783,6 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
                    tmpmat0 = tmpmat0, tmpmat1 = tmpmat1, tmpmat2 = tmpmat2,
                    tmpmat3 = tmpmat3, tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
                    denomvec = denomvec, d1f = d1f, d2f = d2f);
-          pvalList[g] = testStats.vc1_pvalue;
 
           # recover VWorkSqrt
           if g == nGrps && grpSize != windowSize
@@ -840,222 +816,84 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
 
     end
 
-    # summary
-    println("There are ", nSNP, " SNPs in total.");
-    println(nActualSNP, " SNPs were analysed.");
 
     ## provide annotation file
   else
 
-    # define some variables
-    vc0List = 0.0;
-    vc1List = 0.0;
-    pvalList = 0.0;
-    testStats = Stats();
-    if nReads > 1
-      percentVec = zeros(Int64, 10);
-      for i = 1 : 10
-        percentVec[i] = iceil(nReads * i / 10);
+    # preparation for parallel
+    if nprocs() == 1
+      ncores = 1;
+    else
+      ncores = nprocs() - 1;
+    end
+    nReadsParallel = Array(Int, ncores, 1);
+    rawdataParallel = Array(Matrix{Int8}, ncores, 1);
+    grpInfoParallel = Array(Vector{Int}, ncores, 1);
+    offsetSizeParallel = Array(Vector{Int}, ncores, 1);
+    snpIDParallel = Array(Vector{String}, ncores, 1);
+    chrIDParallel = Array(Vector{String}, ncores, 1);
+    snpPosParallel = Array(Vector{String}, ncores, 1);
+    geneNameParallel = Array(Vector{String}, ncores, 1);
+    fill!(nReadsParallel, int(nReads / ncores));
+    nReadsParallel[ncores] = nReads - sum(nReadsParallel[1 : ncores-1]);
+    totaloffset = 0;
+    for i = 1 : ncores
+      if i == 1
+        tmpoffset = 0;
+      else
+        tmpoffset = sum(nReadsParallel[1:i-1]);
+        totaloffset += sum(grpInfoParallel[i-1]);
       end
-      percentIdx = 1;
+      grpInfoParallel[i] = grpInfo[tmpoffset+1 : tmpoffset+nReadsParallel[i]];
+      geneNameParallel[i] = geneName[tmpoffset+1 : tmpoffset+nReadsParallel[i]];
+      offsetSizeParallel[i] =
+        offsetSize[tmpoffset+1 : tmpoffset+nReadsParallel[i]] -
+        offsetSize[tmpoffset+1];
+      rawdataParallel[i] =
+        rawdata[:, totaloffset+1 : totaloffset+sum(grpInfoParallel[i])];
+      snpIDParallel[i] =
+        snpID[totaloffset+1 : totaloffset+sum(grpInfoParallel[i])];
+      chrIDParallel[i] =
+        chrID[totaloffset+1 : totaloffset+sum(grpInfoParallel[i])];
+      snpPosParallel[i] =
+        snpPos[totaloffset+1 : totaloffset+sum(grpInfoParallel[i])];
     end
 
     # loop over genes
-    for idxRead = 1 : nReads
+    outresults = pmap(loopwinAnnot, nReadsParallel, rawdataParallel,
+                      grpInfoParallel, offsetSizeParallel, snpIDParallel,
+                      {bin2geno for i = 1:ncores}, {nPer for i = 1:ncores},
+                      {SNPSize for i = 1:ncores}, {flagAnnotate for i = 1:ncores},
+                      {snpWtType for i = 1:ncores}, {keepIdx for i = 1:ncores},
+                      {nPerKeep for i = 1:ncores}, {kernel for i = 1:ncores},
+                      {kinship for i = 1:ncores}, {test for i = 1:ncores},
+                      {XtNullBasis for i = 1:ncores}, {WPreSim for i = 1:ncores},
+                      {nBlockAscent for i = 1:ncores}, {nMMmax for i = 1:ncores},
+                      {nNullSimPts for i = 1:ncores}, {tolX for i = 1:ncores},
+                      {pvalueComputing for i = 1:ncores},
+                      {device for i = 1:ncores},
+                      {nNullSimNewtonIter for i = 1:ncores},
+                      {rankQPhi for i = 1:ncores}, {evalPhiAdj for i = 1:ncores},
+                      {XPhitNullBasis for i = 1:ncores},
+                      {yShift for i = 1:ncores}, {y for i = 1:ncores},
+                      {KPhiAdj for i = 1:ncores}, {weightedW for i = 1:ncores},
+                      {QPhi for i = 1:ncores}, {PrePartialSumW for i = 1:ncores},
+                      {PreTotalSumW for i = 1:ncores},
+                      {windowSize for i = 1:ncores},
+                      {nPreRank for i = 1:ncores}, {X for i = 1:ncores},
+                      snpPosParallel, chrIDParallel, geneNameParallel);
 
-      # read the binary data
-      curSNPSize = grpInfo[idxRead];
-      readgeno!(genoOri, curSNPSize, nPer, SNPSize, idxRead, bin2geno, rawdata,
-                offset, flagAnnotate, offsetSize = offsetSize);
-
-      tmpMatIsnan = isnan(genoOri);
-      sum!(sumIsnan, tmpMatIsnan);
-      for i = 1 : curSNPSize
-        nChrObs[1, i] = 2 * (nPer - sumIsnan[1, i]);
+    # write output
+    fid = open(outFile, "a");
+    for i = 1 : ncores
+      for j = 1 : size(outresults[i], 1)
+        println(fid, outresults[i][j, 1], ",", outresults[i][j, 2], ",",
+                outresults[i][j, 3], ",", outresults[i][j, 4], ",",
+                outresults[i][j, 5], ",", outresults[i][j, 6], ",",
+                outresults[i][j, 7], ",", outresults[i][j, 8]);
       end
-
-      # minor allele frequencies and get rid of mono-allelic SNPs
-      counter = 0;
-      offset = offsetSize[idxRead];
-      for i = 1 : curSNPSize
-        mafOri[i] = 0.0;
-        for j = 1 : nPer
-          if !tmpMatIsnan[j, i]
-            mafOri[i] += genoOri[j, i];
-          end
-        end
-        mafOri[i] = mafOri[i] / nChrObs[1, i];
-        if mafOri[i] != 0
-          counter += 1;
-          maf[counter] = mafOri[i];
-          snpIDred[counter] = snpID[i + offset];
-          snpPosred[counter] = snpPos[i + offset];
-          pGenoOri = pointer(genoOri) + (i - 1) * nPer * sizeof(Float64);
-          pGeno = pointer(geno) + (counter - 1) * nPer * sizeof(Float64);
-          BLAS.blascopy!(nPer, pGenoOri, 1, pGeno, 1);
-        end
-      end
-      nSNPredVec[idxRead] = curSNPSize - counter;
-      nActualSNP += counter;
-      if counter == 0
-        #println("No valid SNPs at the group which starting from row ",
-        #        offsetSize[idxRead] + 1);
-        # display progress
-        if nReads > 1
-          if idxRead == percentVec[percentIdx]
-            println(percentIdx, "0 %");
-            percentIdx += 1;
-          end
-        end
-        continue;
-      end
-
-      # impute missing genotype by expected minor allele counts
-      for j = 1 : counter
-        for i = 1 : nPer
-          if isnan(geno[i, j])
-            geno[i, j] = 2 * maf[j];
-          end
-        end
-      end
-
-      # get SNP weights
-      grpSize = counter;
-      if isempty(snpWtType)
-        # constant weights
-        snpSqrtWts = ones(grpSize);
-      elseif snpWtType == "beta"
-        # weights by beta density evaluated at MAF
-        snpSqrtWts = sqrt(pdf(Beta(1, 25), maf[1 : grpSize]));
-      elseif snpWtType == "invvar"
-        # weights by inverse variance maf*(1-maf)
-        snpSqrtWts = 1 ./ sqrt( maf[1 : grpSize] .*
-                               (1 - maf[1 : grpSize]) );
-      end
-
-      # retrieve group genotypes
-      if kernel == "GRM"
-        gMAF = maf[1 : grpSize];
-        gSNP = geno[keepIdx, 1 : grpSize];
-        # center and scale genotype matrix by MAF
-        BLAS.ger!(-2.0, oneConst, gMAF, gSNP);
-        tmpvecKernel = zeros(grpSize);
-        for i = 1 : grpSize
-          tmpvecKernel[i] = snpSqrtWts[i] / sqrt(2 * gMAF[i] * (1 - gMAF[i]));
-        end
-        scale!(gSNP, tmpvecKernel);
-        #gSNP = gSNP .* (snpSqrtWts ./ sqrt(2 * gMAF .* (1 - gMAF)))';
-      elseif kernel == "IBS1"
-        # Table 3 in notes
-        gSNP = hcat(geno[keepIdx, 1 : grpSize],
-                    2 - geno[keepIdx, 1 : grpSize]);
-        scale!(gSNP, [snpSqrtWts; snpSqrtWts]);
-      elseif kernel == "IBS2"
-        # Table 2 in notes
-        gSNP = hcat(geno[keepIdx, 1 : grpSize] .>= 1,
-                    geno[keepIdx, 1 : grpSize] .<= 1);
-        scale!(gSNP, [snpSqrtWts; snpSqrtWts]);
-      elseif kernel == "IBS3"
-        # Table 1 in notes
-        gSNP = hcat(-2 * (geno[keepIdx, 1 : grpSize] .<= 1) + 1,
-                    2 * (geno[keepIdx, 1 : grpSize] .>= 1) - 1,
-                    fill(sqrt(2), nPerKeep, grpSize));
-        scale!(gSNP, [snpSqrtWts; snpSqrtWts; snpSqrtWts]);
-      end
-
-      # testing
-
-      if kinship == "none"
-
-        if test == "eRLRT"
-          (b, vc0List, vc1List, testStats) =
-            vctest(ynew, [], XtNullBasis * gSNP, WPreSim = WPreSim, tests = test,
-                   Vform = "half", nBlockAscent = nBlockAscent, nMMmax = nMMmax,
-                   nNullSimPts = nNullSimPts, pvalueComputings = pvalueComputing,
-                   nNullSimNewtonIter = nNullSimNewtonIter, tolX = tolX,
-                   devices = device);
-        else
-          (b, vc0List, vc1List, testStats) =
-            vctest(y, X, gSNP, WPreSim = WPreSim, tests = test,
-                   Vform = "half", nBlockAscent = nBlockAscent, nMMmax = nMMmax,
-                   nNullSimPts = nNullSimPts, pvalueComputings = pvalueComputing,
-                   nNullSimNewtonIter = nNullSimNewtonIter, tolX = tolX,
-                   devices = device);
-        end
-        pvalList = testStats.vc1_pvalue;
-
-      else
-
-        # obtain some orthonormal vectors of space R^n - [QX,QPHI,S]
-        # See Golub and Van Loan (1996) Algorithm 12.4.2 on p602
-        tmpMat = Array(Float64, grpSize, size(XPhitNullBasis, 2));
-        BLAS.gemm!('T', 'N', 1.0, gSNP, XPhitNullBasis, 0.0, tmpMat);
-        (UXPhitS, svalXPhitS, VXPhitS) = svd(tmpMat, thin = false);
-        rankXPhitS =
-          countnz(svalXPhitS .>
-                  max(size(XPhitNullBasis, 2),
-                      size(gSNP, 2) * eps(svalXPhitS[1])));
-        pXPhitSV = pointer(VXPhitS) +
-          rankXPhitS * size(XPhitNullBasis, 2) * sizeof(Float64);
-        BLAS.blascopy!(size(XPhitNullBasis, 2) * rankQPhi,
-                       pXPhitSV, 1, pSubXPhitSV, 1);
-        BLAS.gemm!('N', 'N', 1.0, XPhitNullBasis, subXPhitSV, 0.0, QRes);
-
-        # working Y and working non-trivial variance component
-        #yWork = (PhiAdjsvd[:U]' * (yShift + KPhiAdj * (QRes' * y))) ./ sqrt(evalPhiAdj);
-        BLAS.blascopy!(length(yShift), yShift, 1, tmpvec, 1);
-        BLAS.gemv!('T', 1.0, QRes, y, 0.0, tmpvecQRes);
-        BLAS.gemv!('N', 1.0, KPhiAdj, tmpvecQRes, 1.0, tmpvec);
-        #yWork = BLAS.gemv('T', 1.0, PhiAdjsvd[:U], tmpvec) ./ sqrt(evalPhiAdj);
-        BLAS.gemv!('T', 1.0, weightedW, tmpvec, 0.0, yWork);
-        #for i = 1 : length(yWork)
-        #  yWork[i] = yWork[i] * InvSqrtevalPhiAdj[i];
-        #end
-        #VWorkSqrt = PhiAdjsvd[:U]' * (QPhi' * gSNP) ./ sqrt(evalPhiAdj);
-        VWorkSqrt = Array(Float64, length(evalPhiAdj), size(gSNP, 2));
-        VWorkSqrt2 = Array(Float64, length(evalPhiAdj), size(gSNP, 2));
-        BLAS.gemm!('T', 'N', 1.0, QPhi, gSNP, 0.0, VWorkSqrt2);
-        BLAS.gemm!('T', 'N', 1.0, weightedW, VWorkSqrt2, 0.0, VWorkSqrt);
-        #scale!(InvSqrtevalPhiAdj, VWorkSqrt);
-
-        # obtain LRT and p-value
-        (b, vc0List, vc1List, testStats) =
-          vctest(yWork, [], VWorkSqrt, WPreSim = WPreSim, tests = test,
-                 Vform = "half", nBlockAscent = nBlockAscent, nMMmax = nMMmax,
-                 nNullSimPts = nNullSimPts, pvalueComputings = pvalueComputing,
-                 nNullSimNewtonIter = nNullSimNewtonIter, tolX = tolX,
-                 devices = device, PrePartialSumW = PrePartialSumW,
-                 PreTotalSumW = PreTotalSumW, partialSumWConst = partialSumWConst,
-                 totalSumWConst = totalSumWConst, windowSize = windowSize,
-                 partialSumW = partialSumW, totalSumW = totalSumW,
-                 lambda = lambda, W = W, nPreRank = nPreRank,
-                 tmpmat0 = tmpmat0, tmpmat1 = tmpmat1, tmpmat2 = tmpmat2,
-                 tmpmat3 = tmpmat3, tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
-                 denomvec = denomvec, d1f = d1f, d2f = d2f, offset = offset);
-        pvalList = testStats.vc1_pvalue;
-
-      end
-
-      # display progress
-      if nReads > 1
-        if idxRead == percentVec[percentIdx]
-          println(percentIdx, "0 %");
-          percentIdx += 1;
-        end
-      end
-
-      # write output
-      fid = open(outFile, "a");
-      println(fid, snpIDred[1], ",", snpIDred[counter], ",", chrID[offset + 1],
-              ",", snpPosred[1], ",", snpPosred[counter], ",", geneName[idxRead],
-              ",", curSNPSize, ",", pvalList);
-      close(fid);
-
     end
-
-    # summary
-    println("There are ", nSNP, " SNPs in total.");
-    println(nActualSNP, " SNPs were analysed.");
+    close(fid);
 
   end
 
