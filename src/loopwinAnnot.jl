@@ -7,7 +7,7 @@
                                   rankQPhi, evalPhiAdj, XPhitNullBasis, yShift,
                                   y, KPhiAdj, weightedW, QPhi, PrePartialSumW,
                                   PreTotalSumW, windowSize, nPreRank, X, snpPos,
-                                  chrID, geneName)
+                                  chrID, geneName, ynew)
 
   QRes = Array(Float64, nPerKeep, rankQPhi);
   tmpvec = similar(yShift);
@@ -163,14 +163,28 @@
                  Vform = "half", nBlockAscent = nBlockAscent, nMMmax = nMMmax,
                  nNullSimPts = nNullSimPts, pvalueComputings = pvalueComputing,
                  nNullSimNewtonIter = nNullSimNewtonIter, tolX = tolX,
-                 devices = device);
+                 devices = device, PrePartialSumW = PrePartialSumW,
+                 PreTotalSumW = PreTotalSumW, partialSumWConst = partialSumWConst,
+                 totalSumWConst = totalSumWConst, windowSize = windowSize,
+                 partialSumW = partialSumW, totalSumW = totalSumW,
+                 lambda = lambda, W = W, nPreRank = nPreRank,
+                 tmpmat0 = tmpmat0, tmpmat1 = tmpmat1, tmpmat2 = tmpmat2,
+                 tmpmat3 = tmpmat3, tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
+                 denomvec = denomvec, d1f = d1f, d2f = d2f, offset = offset);
       else
         (b, vc0List, vc1List, pvalList) =
           vctest(y, X, gSNP, WPreSim = WPreSim, tests = test,
                  Vform = "half", nBlockAscent = nBlockAscent, nMMmax = nMMmax,
                  nNullSimPts = nNullSimPts, pvalueComputings = pvalueComputing,
                  nNullSimNewtonIter = nNullSimNewtonIter, tolX = tolX,
-                 devices = device);
+                 devices = device, PrePartialSumW = PrePartialSumW,
+                 PreTotalSumW = PreTotalSumW, partialSumWConst = partialSumWConst,
+                 totalSumWConst = totalSumWConst, windowSize = windowSize,
+                 partialSumW = partialSumW, totalSumW = totalSumW,
+                 lambda = lambda, W = W, nPreRank = nPreRank,
+                 tmpmat0 = tmpmat0, tmpmat1 = tmpmat1, tmpmat2 = tmpmat2,
+                 tmpmat3 = tmpmat3, tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
+                 denomvec = denomvec, d1f = d1f, d2f = d2f, offset = offset);
       end
 
     else

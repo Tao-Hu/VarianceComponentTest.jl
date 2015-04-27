@@ -67,7 +67,7 @@
         totalSumWConst[i] = BLAS.asum(rankAdjV, pW, 1) + partialSumWConst[i];
       end
     else
-      if rankAdjV >= nPreRank
+      if rankAdjV > nPreRank
         partialSumWConst = rand(Chisq(n - rankX - rankAdjV), nSimPts);
         for i = 1 : nSimPts
           pW = pointer(WPreSim) + (i - 1) * windowSize * sizeof(Float64);
@@ -134,6 +134,10 @@
           end
         end
         patzero = (nSimPts - counter) / nSimPts;
+        if patzero == 1
+          #println("prob at zero is 1");
+          return 1.0;
+        end
         counter = nPtsChi2;
         fill!(lambda, 0.0);
         #fill!(lambda, 1e-5);
@@ -313,6 +317,9 @@
           end
         end
         patzero = (nSimPts - counter) / nSimPts;
+        if patzero == 1
+          return 1.0;
+        end
       end
 
     end
@@ -325,14 +332,21 @@
       ahat = var(simnull) / (2 * mean(simnull));
       bhat = 2 * (mean(simnull) ^ 2) / var(simnull);
       #if mean(simnull) == 0 && var(simnull) == 0
-      #  pvalue = 1.0;
-      #  println("Invalid p-value occur! Starting from row ", offset+1);
-      #elseif length(simnull) == 0
+        #pvalue = 1.0;
+        #println("Invalid p-value occur! Starting from row ", offset+1);
+        #println("patzero is ", patzero);
+      #end
+      #if length(simnull) == 0
       #  pvalue = 1.0;
       #  println("All simulated statistics are negative! Starting from row ", offset+1);
+      #end
       #else
         #println("mean of simnull = ", mean(simnull), ", var = ", var(simnull));
         #println("length of simnull = ", length(simnull), ", sum = ", sum(simnull));
+      #else
+        #println("mean of simnull = ", mean(simnull), ", var = ", var(simnull));
+        #println("length of simnull = ", length(simnull), ", sum = ", sum(simnull));
+        #println("ahat = ", ahat, ", bhat = ", bhat, ", teststat = ", teststat, ", patzero = ", patzero);
       pvalue = (1 - patzero) * (1 - cdf(Chisq(bhat), teststat / ahat));
       if teststat == 0; pvalue = pvalue + patzero; end;
       #end

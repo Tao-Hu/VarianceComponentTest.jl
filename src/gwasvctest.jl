@@ -4,7 +4,7 @@ annotationFile::String = "", outFile::String = "", test::String = "eRLRT",
 kinship::String = "GRM", kernel::String = "GRM", pvalueComputing::String = "chi2",
 windowSize::Int = 50, infLambda::Float64 = 0.0, MemoryLimit::Int = 200000000,
 nNullSimPts::Int = 10000, nMMmax::Int = 0, nBlockAscent::Int = 1000,
-nNullSimNewtonIter::Int = 15, tolX::Float64 = 1e-6, snpWtType::String = "")
+nNullSimNewtonIter::Int = 15, tolX::Float64 = 1e-4, snpWtType::String = "")
 
 Test the SNP set effect with presence of additive genetic effect and
 enviromental effect.
@@ -50,7 +50,7 @@ is 200000000 (equivalent to 200 megabytes).
 
 "nNullSimNewtonIter" - Max Newton iteration, default is 15.
 
-"tolX" - Tolerance in change of parameters, default is 1e-6.
+"tolX" - Tolerance in change of parameters, default is 1e-4.
 
 "snpWtType" - "beta"|"invvar", add weights to the kernel matrix S,
 default is "" (add no weights by default).
@@ -65,7 +65,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
                     nBlockAscent::Int = 1000, nNullSimPts::Int = 10000,
                     nNullSimNewtonIter::Int = 15, outFile::String = "",
                     plinkFile::String = "", snpWtType::String = "",
-                    test::String = "eRLRT", tolX::Float64 = 1e-6,
+                    test::String = "eRLRT", tolX::Float64 = 1e-4,
                     traitFile::String = "", MemoryLimit::Int = 200000000,
                     pvalueComputing::String = "chi2", windowSize::Int = 50,
                     annotationFile::String = "")
@@ -347,7 +347,9 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
   end
   ridx, cidx = ind2sub(size(X), find(isnan(X)));
   X[sub2ind(size(X), find(isnan(X)))] = meanX[cidx];
-  kinMat = kinMat[keepIdx, keepIdx];
+  if kinship != "none"
+    kinMat = kinMat[keepIdx, keepIdx];
+  end
 
 
   ## pre-processing for testing
@@ -391,16 +393,28 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     # only one non-trivial variance component: SNP set
 
     # pre-compute basis of N(X') and projected y
-    if test == "eRLRT"
-      Xsvd = svdfact(X, thin = false);
-      rankX = countnz(Xsvd[:S] .> nPerKeep * eps(Xsvd[:S][1]));
-      XtNullBasis = Xsvd[:U][:, rankX + 1 : end]';
-      @everywhere ynew = y;
-      BLAS.gemv!('N', 1.0, XtNullBasis, y, 0.0, ynew);
-    end
+    Xsvd = svdfact(X, thin = false);
+    rankX = countnz(Xsvd[:S] .> nPerKeep * eps(Xsvd[:S][1]));
+    XtNullBasis = Xsvd[:U][:, rankX + 1 : end]';
+    ynew = zeros(nPerKeep - rankX);
+    BLAS.gemv!('N', 1.0, XtNullBasis, y, 0.0, ynew);
+
+    rankQPhi = 0;
+    evalPhiAdj = Float64[];
+    XPhitNullBasis = [Float64[] Float64[]];
+    yShift = Float64[];
+    KPhiAdj = [Float64[] Float64[]];
+    weightedW = [Float64[] Float64[]];
+    QPhi = [Float64[] Float64[]];
+    PrePartialSumW = [Float64[] Float64[]];
+    PreTotalSumW = [Float64[] Float64[]];
+    nPreRank = min(nPerKeep, windowSize);
+    tmpn = nPerKeep - rankX;
 
   else
     # >=2 non-trivial variance components
+
+    ynew = Float64[];
 
     # obtain a basis of X and (possibly) extra variance components
     # Xsvd[:U] -- QX
@@ -481,34 +495,30 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
     # precompute shift in Y
     yShift = QPhi' * y;
 
-    # simulate Chi Squares and sums of Chi Squares
-    tmpwinSize = min(length(evalPhiAdj), windowSize);
-    nPreRank = tmpwinSize;
-    PrePartialSumW = Array(Float64, nNullSimPts, nPreRank - 1);
-    PreTotalSumW = Array(Float64, nNullSimPts, nPreRank - 1);
-    tmpSumVec = Array(Float64, nNullSimPts);
-    p1 = pointer(PrePartialSumW);
-    BLAS.blascopy!(nNullSimPts,
-                   rand(Chisq(length(evalPhiAdj) - tmpwinSize + nPreRank - 1),
-                        nNullSimPts),
-                   1, p1, 1);
-    for i = 1 : nNullSimPts
-      pW = pointer(WPreSim) + (i - 1) * windowSize * sizeof(Float64);
-      tmpSumVec[i] = BLAS.asum(windowSize - nPreRank + 1, pW, 1);
-      PreTotalSumW[i, 1] = tmpSumVec[i] + PrePartialSumW[i, 1];
-    end
-    for j = 2 : nPreRank - 1
-      p1 = pointer(PrePartialSumW) + (j - 1) * nNullSimPts * sizeof(Float64);
-      BLAS.blascopy!(nNullSimPts,
-                     rand(Chisq(length(evalPhiAdj) - tmpwinSize + nPreRank - j),
-                          nNullSimPts),
-                     1, p1, 1);
-      for i = 1 : nNullSimPts
-        tmpSumVec[i] += WPreSim[windowSize - nPreRank + j, i];
-        PreTotalSumW[i, j] = tmpSumVec[i] + PrePartialSumW[i, j];
-      end
-    end
+    # prepare for simulating Chi Squares and sums of Chi Squares
+    nPreRank = min(length(evalPhiAdj), windowSize);
+    tmpn = length(evalPhiAdj);
 
+  end
+
+  # simulate Chi Squares and sums of Chi Squares
+  PrePartialSumW = Array(Float64, nNullSimPts, nPreRank);
+  PreTotalSumW = Array(Float64, nNullSimPts, nPreRank);
+  tmpSumVec = Array(Float64, nNullSimPts);
+  p1 = pointer(PrePartialSumW);
+  BLAS.blascopy!(nNullSimPts, rand(Chisq(tmpn - 1), nNullSimPts), 1, p1, 1);
+  for i = 1 : nNullSimPts
+    pW = pointer(WPreSim) + (i - 1) * windowSize * sizeof(Float64);
+    tmpSumVec[i] = BLAS.asum(1, pW, 1);
+    PreTotalSumW[i, 1] = tmpSumVec[i] + PrePartialSumW[i, 1];
+  end
+  for j = 2 : nPreRank
+    p1 = pointer(PrePartialSumW) + (j - 1) * nNullSimPts * sizeof(Float64);
+    BLAS.blascopy!(nNullSimPts, rand(Chisq(tmpn - j), nNullSimPts), 1, p1, 1);
+    for i = 1 : nNullSimPts
+      tmpSumVec[i] += WPreSim[j, i];
+      PreTotalSumW[i, j] = tmpSumVec[i] + PrePartialSumW[i, j];
+    end
   end
 
   # prepare output
@@ -881,7 +891,8 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
                       {PreTotalSumW for i = 1:ncores},
                       {windowSize for i = 1:ncores},
                       {nPreRank for i = 1:ncores}, {X for i = 1:ncores},
-                      snpPosParallel, chrIDParallel, geneNameParallel);
+                      snpPosParallel, chrIDParallel, geneNameParallel,
+                      {ynew for i = 1:ncores});
 
     # write output
     fid = open(outFile, "a");

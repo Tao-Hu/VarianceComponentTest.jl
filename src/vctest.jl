@@ -2,7 +2,7 @@
                             devices::String = "CPU", nMMmax::Int = 0,
                             nBlockAscent::Int = 1000, nNullSimPts::Int = 10000,
                             nNullSimNewtonIter::Int = 15, tests::String = "eLRT",
-                            tolX::Float64 = 1e-6,
+                            tolX::Float64 = 1e-4,
                             vcInit::Array{Float64, 1} = Float64[],
                             Vform::String = "whole",
                             pvalueComputings::String = "chi2",
@@ -95,10 +95,10 @@
       wholeV = V;
     end
   elseif Vform == "half"
-    (UV, evalV) = svd(V);
+    (UVfull, evalV) = svd(V, thin=false);
     rankV = countnz(evalV .> n * eps(maximum(evalV)));
     evalV = evalV[1:rankV] .^ 2;
-    UV = UV[:, 1:rankV];
+    UV = UVfull[:, 1:rankV];
     #if tests == "eLRT" || tests == "eRLRT"
     #  wholeV = *(V, V');
     #end
@@ -116,15 +116,23 @@
 
   # obtain eigenvalues of (I-PX)V(I-PX)
   if !isempty(X) || tests == "eScore"
-    sqrtV = UV .* sqrt(evalV)';
+    #sqrtV = UV .* sqrt(evalV)';
+    sqrtV = similar(UV);
+    psqrtV = pointer(sqrtV);
+    pUV = pointer(UV);
+    BLAS.blascopy!(n*rankV, pUV, 1, psqrtV, 1);
+    scale!(sqrtV, sqrt(evalV));
   end
-  #sqrtV = UV;
-  #scale!(sqrtV, sqrt(evalV));
   if isempty(X)
     evalAdjV = evalV;
   else
-    (UAdjV, evalAdjV) = svd(sqrtV - *(UX[:, 1:rankX], *(UX[:,1:rankX]', sqrtV)),
-                            thin = false);
+    subUX = Array(Float64, n, rankX);
+    psubUX = pointer(subUX);
+    pUX = pointer(UX);
+    BLAS.blascopy!(n*rankX, pUX, 1, psubUX, 1);
+    mat1 = BLAS.gemm('T', 'N', 1.0, subUX, sqrtV);
+    mat2 = BLAS.gemm('N', 'N', 1.0, subUX, mat1);
+    (UAdjV, evalAdjV) = svd(sqrtV - mat2, thin = false);
     evalAdjV = evalAdjV[evalAdjV .> n * eps(maximum(evalAdjV))] .^ 2;
   end
   rankAdjV = length(evalAdjV);
@@ -132,29 +140,30 @@
   # fit the variance component model
   if tests == "eLRT"
 
+    evalVfull = zeros(n);
+    pevalVfull = pointer(evalVfull);
+    pevalV = pointer(evalV);
+    BLAS.blascopy!(rankV, pevalV, 1, pevalVfull, 1);
     # estimates under null model
     bNull = X \ y;
     rNull = y - X * bNull;
     vc0Null = norm(rNull) ^ 2 / n;
-    Xrot = UV' * X;
-    yrot = UV' * y;
+    Xrot = UVfull' * X;
+    yrot = UVfull' * y;
     loglConst = - 0.5 * n * log(2.0 * pi);
 
     # set starting point
     if isempty(bInit)
-      b = bNull;
-      r = rNull;
+      b = copy(bNull);
+      r = copy(rNull);
     else
-      b = bInit;
+      b = copy(bInit);
       r = y - X * b;
     end
     if isempty(vcInit)
       vc0 = norm(r) ^ 2 / n;
       vc1 = 1;
-      wt = 1.0 ./ sqrt(vc1 * evalV + vc0);
-      Xnew = scale(wt, Xrot);
-      ynew = wt .* yrot;
-      res = ynew - Xnew * b;
+      wt = 1.0 ./ sqrt(vc1 * evalVfull + vc0);
     else
       vc0 = vcInit[1];
       # avoid sticky boundary
@@ -165,56 +174,59 @@
       if vc1 == 0
         vc1 = 1e-4;
       end
-      wt = 1.0 ./ sqrt(vc1 * evalV + vc0);
+      wt = 1.0 ./ sqrt(vc1 * evalVfull + vc0);
       Xnew = scale(wt, Xrot);
       ynew = wt .* yrot;
       b = Xnew \ ynew;
-      res = ynew - Xnew * b;
     end
 
     # update residuals according supplied var. components
-    r = y - X * b;
-    #rnew = UV'*r;
-    deltaRes = norm(r) ^ 2 - norm(res ./ wt) ^ 2;
+    r = y - BLAS.gemv('N', X, b);
+    rnew = BLAS.gemv('T', UV, r);
+    deltaRes = norm(r) ^ 2 - norm(rnew) ^ 2;
+    logl = loglConst + sum(log, wt) - 0.5 * deltaRes / vc0 -
+      0.5 * sumabs2(rnew .* wt[1:rankV]);
 
     nIters = 0;
+    #bOld = similar(b);
+    #pbOld = pointer(bOld);
+    #pb = pointer(b);
+    #BLAS.blascopy!(length(b), pb, 1, pbOld, 1);
+    #denvec = similar(rnew);
     for iBlockAscent = 1:nBlockAscent
 
       nIters = iBlockAscent;
 
       # update variance components
-      for iMM = 1:nMMmax
-        res = res .* wt;
-        wt = wt .* wt;
-        #tmpvec = vc0 + vc1*evalV;
-        #denvec = 1./tmpvec; # same as wt
-        #numvec = (rnew .* denvec).^2;
-        vc0 = sqrt( (vc0 ^ 2 * sumabs2(res) + deltaRes) /
-                     (sumabs(wt) + (n - rankV) / vc0) );
-        vc1 = vc1 * sqrt( dot(res, res .* evalV) / sum(evalV .* wt) );
-      end
+      denvec = wt[1:rankV] .^ 2;
+      numvec = rnew .* denvec;
+      vc0 = sqrt( (vc0 ^ 2 * sumabs2(numvec) + deltaRes) /
+                  (sumabs(denvec) + (n - rankV) / vc0) );
+      vc1 = vc1 * sqrt( dot(numvec, numvec .* evalV) / sumabs(evalV .* denvec) );
 
       # update fixed effects and residuals
-      bOld = b;
-      wt = 1.0 ./ sqrt(vc1 * evalV + vc0);
+      #pb = pointer(b);
+      #BLAS.blascopy!(length(b), pb, 1, pbOld, 1);
+      wt = 1.0 ./ sqrt(vc1 * evalVfull + vc0);
       Xnew = scale(wt, Xrot);
       ynew = wt .* yrot;
       b = Xnew \ ynew;
-      res = ynew - Xnew * b;
-      r = y - X * b;
-      #rnew = UV'*r;
-      deltaRes = norm(r) ^ 2 - norm(res ./ wt) ^ 2;
+      r = y - BLAS.gemv('N', X, b);
+      rnew = BLAS.gemv('T', UV, r);
+      deltaRes = norm(r) ^ 2 - norm(rnew) ^ 2;
 
       # stopping criterion
-      if norm(b - bOld) <= tolX * (norm(bOld) + 1)
+      loglOld = logl;
+      logl = loglConst + sum(log, wt) - 0.5 * deltaRes / vc0 -
+        0.5 * BLAS.dot(rankV, rnew .^ 2, 1, denvec, 1);
+      if abs(logl - loglOld) < tolX * (abs(logl) + 1.0)
         break
       end
 
     end
 
     # log-likelihood at alternative
-    logLikeAlt = loglConst + sum(log, wt) - 0.5 * (n - rankV) * log(vc0) -
-      0.5 * deltaRes / vc0 - 0.5 * sumabs2(res);
+    logLikeAlt = logl;
     # log-likelihood at null
     logLikeNull = loglConst - 0.5 * n * log(vc0Null) -
       0.5 * sum(rNull .^ 2) / vc0Null;
@@ -391,7 +403,9 @@
     vc1 = 0;
 
     # score test statistic
-    statScore = norm(r' * sqrtV) ^ 2 / norm(r) ^ 2;
+    #statScore = norm(r' * sqrtV) ^ 2 / norm(r) ^ 2;
+    statScore = norm(BLAS.gemv('T', sqrtV, r)) ^ 2 / norm(r) ^ 2;
+    statScore = max(statScore, sum(evalV) / n);
 
     # obtain p-value for testing vc1=0
     vc1_pvalue = vctestnullsim(statScore, evalV, evalAdjV, n, rankX,
