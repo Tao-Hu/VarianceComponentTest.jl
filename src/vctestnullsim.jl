@@ -17,7 +17,8 @@
   tmpmat5::Array{Float64, 2} = [Float64[] Float64[]],
   denomvec::Array{Float64, 1} = Float64[],
   d1f::Array{Float64, 1} = Float64[],
-  d2f::Array{Float64, 1} = Float64[], offset::Int = 0)
+  d2f::Array{Float64, 1} = Float64[], offset::Int = 0,
+  nPtsChi2::Int = 300, simnull::Vector{Float64} = Float64[])
   # VCTESTNULLSIM Simulate null distribution for testing zero var. component
   #
   # VCTESTNULLSIM(evalV,evalAdjV,n,rankX,WPreSim) simulate the null distributions
@@ -49,9 +50,9 @@
   if device == "CPU"
 
     # Preparations
-    nPtsChi2 = 300;
+    #nPtsChi2 = 300;
     if size(WPreSim, 1) < rankAdjV
-      newSim = randn(rankAdjV - size(WPreSim, 1), nSimPts);
+      newSim = randn(rankAdjV - size(WPreSim, 1), nSimPts) .^ 2;
       if isempty(WPreSim)
         WPreSim = newSim;
       else
@@ -63,14 +64,14 @@
       partialSumWConst = rand(Chisq(n - rankX - rankAdjV), nSimPts);
       totalSumWConst = similar(partialSumWConst);
       for i = 1 : nSimPts
-        pW = pointer(WPreSim) + (i - 1) * windowSize * sizeof(Float64);
+        pW = pointer(WPreSim) + (i - 1) * size(WPreSim, 1) * sizeof(Float64);
         totalSumWConst[i] = BLAS.asum(rankAdjV, pW, 1) + partialSumWConst[i];
       end
     else
       if rankAdjV > nPreRank
         partialSumWConst = rand(Chisq(n - rankX - rankAdjV), nSimPts);
         for i = 1 : nSimPts
-          pW = pointer(WPreSim) + (i - 1) * windowSize * sizeof(Float64);
+          pW = pointer(WPreSim) + (i - 1) * size(WPreSim, 1) * sizeof(Float64);
           totalSumWConst[i] = BLAS.asum(rankAdjV, pW, 1) + partialSumWConst[i];
         end
       else
@@ -138,7 +139,7 @@
           #println("prob at zero is 1");
           return 1.0;
         end
-        counter = nPtsChi2;
+        counter = min(counter, nPtsChi2);
         fill!(lambda, 0.0);
         #fill!(lambda, 1e-5);
       end
@@ -259,26 +260,41 @@
       # collect null distribution samples
       if test == "eLRT"
         tmpmat6 = Array(Float64, rankV, counter);
-        BLAS.gemm!('N', 'N', 1.0, reshape(evalV, rankV, 1), lambda, 0.0,
-                   tmpmat6);
+        if pvalueComputing == "MonteCarlo"
+          BLAS.gemm!('N', 'N', 1.0, reshape(evalV, rankV, 1), lambda[:, 1:counter], 0.0,
+                     tmpmat6);
+        else
+          BLAS.gemm!('N', 'N', 1.0, reshape(evalV, rankV, 1), lambda, 0.0,
+                     tmpmat6);
+        end
         simnull = Array(Float64, counter);
         for j = 1 : counter
-          tmpprod = 1.0;
-          for i = 1 : rankV
-            tmpprod *= (tmpmat6[i, j] + 1);
+          tmpsum1 = 0.0;
+          tmpprod = 0.0;
+          for i = 1 : rankAdjV
+            tmpmat0[i, j] = evalAdjV[i] * lambda[j] + 1;
+            tmpmat1[i, j] = W[i, j] / tmpmat0[i, j];
+            tmpsum1 += tmpmat1[i, j];
           end
-          simnull[j] = ne * log(totalSumW[j]) - ne * log(denomvec[j]) -
-            log(tmpprod);
+          for i = 1 : rankV
+            tmpprod += log(tmpmat6[i, j] + 1);
+          end
+          simnull[j] = ne * log(totalSumW[j]) -
+            ne * log(tmpsum1 + partialSumW[j]) - tmpprod;
         end
       else
         simnull = Array(Float64, counter);
         for j = 1 : counter
-          tmpprod = 1.0;
+          tmpsum1 = 0.0;
+          tmpprod = 0.0;
           for i = 1 : rankAdjV
-            tmpprod *= tmpmat0[i, j];
+            tmpmat0[i, j] = evalAdjV[i] * lambda[j] + 1;
+            tmpprod += log(tmpmat0[i, j]);
+            tmpmat1[i, j] = W[i, j] / tmpmat0[i, j];
+            tmpsum1 += tmpmat1[i, j];
           end
-          simnull[j] = ne * log(totalSumW[j]) - ne * log(denomvec[j]) -
-            log(tmpprod);
+          simnull[j] = ne * log(totalSumW[j]) -
+            ne * log(tmpsum1 + partialSumW[j]) - tmpprod;
         end
       end
       if pvalueComputing == "MonteCarlo"
@@ -292,7 +308,7 @@
 
       threshold = sum(evalV) / n;
       if pvalueComputing == "MonteCarlo"
-        simnull = Array(Float64, nSimPts);
+        #simnull = Array(Float64, nSimPts);
         for j = 1 : nSimPts
           tmpsum = 0.0;
           for i = 1 : rankAdjV
@@ -301,7 +317,7 @@
           simnull[j] = max(tmpsum / totalSumWConst[j], threshold);
         end
       else
-        simnull = Array(Float64, nPtsChi2);
+        #simnull = Array(Float64, nPtsChi2);
         counter = 0;
         for j = 1 : nSimPts
           tmpsum = 0.0;
@@ -329,8 +345,15 @@
       pvalue = countnz(simnull .>= teststat) / length(simnull);
       return pvalue;
     elseif pvalueComputing == "chi2"
-      ahat = var(simnull) / (2 * mean(simnull));
-      bhat = 2 * (mean(simnull) ^ 2) / var(simnull);
+      if test == "eScore" && counter < nPtsChi2
+        #println(counter, ", ", offset + 1);
+        tmpsimnull = simnull[1:counter];
+        ahat = var(tmpsimnull) / (2 * mean(tmpsimnull));
+        bhat = 2 * (mean(tmpsimnull) ^ 2) / var(tmpsimnull);
+      else
+        ahat = var(simnull) / (2 * mean(simnull));
+        bhat = 2 * (mean(simnull) ^ 2) / var(simnull);
+      end
       #if mean(simnull) == 0 && var(simnull) == 0
         #pvalue = 1.0;
         #println("Invalid p-value occur! Starting from row ", offset+1);

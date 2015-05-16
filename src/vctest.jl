@@ -25,7 +25,9 @@
                             tmpmat5::Array{Float64, 2} = [Float64[] Float64[]],
                             denomvec::Array{Float64, 1} = Float64[],
                             d1f::Array{Float64, 1} = Float64[],
-                            d2f::Array{Float64, 1} = Float64[], offset::Int = 0)
+                            d2f::Array{Float64, 1} = Float64[], offset::Int = 0,
+                            nPtsChi2::Int = 300,
+                            simnull::Vector{Float64} = Float64[])
   # VCTEST Fit and test for the nontrivial variance component
   #
   # [SIMNULL] = VCTEST(y,X,V) fits and then tests for $H_0:sigma_1^2=0$ in
@@ -95,9 +97,14 @@
       wholeV = V;
     end
   elseif Vform == "half"
-    (UVfull, evalV) = svd(V, thin=false);
-    rankV = countnz(evalV .> n * eps(maximum(evalV)));
-    evalV = evalV[1:rankV] .^ 2;
+    (UVfull, tmpevalVfull) = svd(V, thin=false);
+    evalVfull = zeros(n);
+    pevalVfull = pointer(evalVfull);
+    ptmpevalV = pointer(tmpevalVfull);
+    BLAS.blascopy!(length(tmpevalVfull), ptmpevalV, 1, pevalVfull, 1);
+    rankV = countnz(evalVfull .> n * eps(maximum(evalVfull)));
+    evalVfull = evalVfull .^ 2;
+    evalV = evalVfull[1:rankV];
     UV = UVfull[:, 1:rankV];
     #if tests == "eLRT" || tests == "eRLRT"
     #  wholeV = *(V, V');
@@ -140,10 +147,6 @@
   # fit the variance component model
   if tests == "eLRT"
 
-    evalVfull = zeros(n);
-    pevalVfull = pointer(evalVfull);
-    pevalV = pointer(evalV);
-    BLAS.blascopy!(rankV, pevalV, 1, pevalVfull, 1);
     # estimates under null model
     bNull = X \ y;
     rNull = y - X * bNull;
@@ -182,10 +185,9 @@
 
     # update residuals according supplied var. components
     r = y - BLAS.gemv('N', X, b);
-    rnew = BLAS.gemv('T', UV, r);
-    deltaRes = norm(r) ^ 2 - norm(rnew) ^ 2;
-    logl = loglConst + sum(log, wt) - 0.5 * deltaRes / vc0 -
-      0.5 * sumabs2(rnew .* wt[1:rankV]);
+    rnew = BLAS.gemv('T', UVfull, r);
+    #deltaRes = norm(r) ^ 2 - norm(rnew) ^ 2;
+    logl = loglConst + sum(log, wt) - 0.5 * sumabs2(rnew .* wt);
 
     nIters = 0;
     #bOld = similar(b);
@@ -193,32 +195,38 @@
     #pb = pointer(b);
     #BLAS.blascopy!(length(b), pb, 1, pbOld, 1);
     #denvec = similar(rnew);
+    denvec = Float64[];
     for iBlockAscent = 1:nBlockAscent
 
       nIters = iBlockAscent;
 
       # update variance components
-      denvec = wt[1:rankV] .^ 2;
-      numvec = rnew .* denvec;
-      vc0 = sqrt( (vc0 ^ 2 * sumabs2(numvec) + deltaRes) /
-                  (sumabs(denvec) + (n - rankV) / vc0) );
-      vc1 = vc1 * sqrt( dot(numvec, numvec .* evalV) / sumabs(evalV .* denvec) );
+      for iMM = 1:nMMmax
+        denvec = 1.0 ./ (vc1 * evalVfull + vc0);
+        numvec = rnew .* denvec;
+        #vc0 = sqrt( (vc0 ^ 2 * sumabs2(numvec) + deltaRes) /
+        #            (sumabs(denvec) + (n - rankV) / vc0) );
+        vc0 = vc0 * sqrt(sumabs2(numvec) / sumabs(denvec));
+        vc1 = vc1 * sqrt( dot(numvec, numvec .* evalVfull) /
+                           sumabs(evalVfull .* denvec) );
+        #wt = 1.0 ./ sqrt(vc1 * evalVfull + vc0);
+      end
 
       # update fixed effects and residuals
       #pb = pointer(b);
       #BLAS.blascopy!(length(b), pb, 1, pbOld, 1);
-      wt = 1.0 ./ sqrt(vc1 * evalVfull + vc0);
+      wt = sqrt(denvec);
       Xnew = scale(wt, Xrot);
       ynew = wt .* yrot;
       b = Xnew \ ynew;
       r = y - BLAS.gemv('N', X, b);
-      rnew = BLAS.gemv('T', UV, r);
-      deltaRes = norm(r) ^ 2 - norm(rnew) ^ 2;
+      rnew = BLAS.gemv('T', UVfull, r);
+      #deltaRes = norm(r) ^ 2 - norm(rnew) ^ 2;
 
       # stopping criterion
       loglOld = logl;
-      logl = loglConst + sum(log, wt) - 0.5 * deltaRes / vc0 -
-        0.5 * BLAS.dot(rankV, rnew .^ 2, 1, denvec, 1);
+      logl = loglConst + sum(log, wt) -
+        0.5 * BLAS.dot(length(evalVfull), rnew .^ 2, 1, denvec, 1);
       if abs(logl - loglOld) < tolX * (abs(logl) + 1.0)
         break
       end
@@ -261,7 +269,8 @@
                                tmpmat2 = tmpmat2, tmpmat3 = tmpmat3,
                                tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
                                denomvec = denomvec,
-                               d1f = d1f, d2f = d2f, offset = offset);
+                               d1f = d1f, d2f = d2f, offset = offset,
+                               nPtsChi2 = nPtsChi2, simnull = simnull);
 
     # return values
     return b, vc0, vc1, vc1_pvalue;
@@ -377,7 +386,8 @@
                                tmpmat2 = tmpmat2, tmpmat3 = tmpmat3,
                                tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
                                denomvec = denomvec,
-                               d1f = d1f, d2f = d2f, offset = offset);
+                               d1f = d1f, d2f = d2f, offset = offset,
+                               nPtsChi2 = nPtsChi2, simnull = simnull);
 
     # estimate fixed effects
     if isempty(X)
@@ -427,7 +437,8 @@
                                tmpmat2 = tmpmat2, tmpmat3 = tmpmat3,
                                tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
                                denomvec = denomvec,
-                               d1f = d1f, d2f = d2f, offset = offset);
+                               d1f = d1f, d2f = d2f, offset = offset,
+                               nPtsChi2 = nPtsChi2, simnull = simnull);
 
     # return values
     return b, vc0, vc1, vc1_pvalue;

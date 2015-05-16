@@ -28,20 +28,27 @@
   sumIsnan = Array(Float64, 1, windowSize);
   nChrObs = Array(Float64, 1, windowSize);
   if pvalueComputing == "chi2"
-    partialSumW = Array(Float64, 300);
-    totalSumW = Array(Float64, 300);
-    lambda = Array(Float64, 1, 300);
-    W = Array(Float64, windowSize, 300);
-    tmpmat0 = Array(Float64, windowSize, 300);
-    tmpmat1 = Array(Float64, windowSize, 300);
-    tmpmat2 = Array(Float64, windowSize, 300);
-    tmpmat3 = Array(Float64, windowSize, 300);
-    tmpmat4 = Array(Float64, windowSize, 300);
-    tmpmat5 = Array(Float64, windowSize, 300);
-    denomvec = Array(Float64, 300);
-    d1f = Array(Float64, 300);
-    d2f = Array(Float64, 300);
+    nPtsChi2 = 300;
+    partialSumW = Array(Float64, nPtsChi2);
+    totalSumW = Array(Float64, nPtsChi2);
+    lambda = Array(Float64, 1, nPtsChi2);
+    W = Array(Float64, windowSize, nPtsChi2);
+    tmpmat0 = Array(Float64, windowSize, nPtsChi2);
+    tmpmat1 = Array(Float64, windowSize, nPtsChi2);
+    tmpmat2 = Array(Float64, windowSize, nPtsChi2);
+    tmpmat3 = Array(Float64, windowSize, nPtsChi2);
+    tmpmat4 = Array(Float64, windowSize, nPtsChi2);
+    tmpmat5 = Array(Float64, windowSize, nPtsChi2);
+    denomvec = Array(Float64, nPtsChi2);
+    d1f = Array(Float64, nPtsChi2);
+    d2f = Array(Float64, nPtsChi2);
+    if test == "eScore"
+      simnull = Array(Float64, nPtsChi2);
+    else
+      simnull = Float64[];
+    end
   else
+    nPtsChi2 = 300;
     partialSumW = Array(Float64, nNullSimPts);
     totalSumW = Array(Float64, nNullSimPts);
     lambda = Array(Float64, 1, nNullSimPts);
@@ -55,6 +62,11 @@
     denomvec = Array(Float64, nNullSimPts);
     d1f = Array(Float64, nNullSimPts);
     d2f = Array(Float64, nNullSimPts);
+    if test == "eScore"
+      simnull = Array(Float64, nNullSimPts);
+    else
+      simnull = Float64[];
+    end
   end
 
   results = Array(Any, nReads, 8);
@@ -170,7 +182,8 @@
                  lambda = lambda, W = W, nPreRank = nPreRank,
                  tmpmat0 = tmpmat0, tmpmat1 = tmpmat1, tmpmat2 = tmpmat2,
                  tmpmat3 = tmpmat3, tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
-                 denomvec = denomvec, d1f = d1f, d2f = d2f, offset = offset);
+                 denomvec = denomvec, d1f = d1f, d2f = d2f, offset = offset,
+                 nPtsChi2 = nPtsChi2, simnull = simnull);
       else
         (b, vc0List, vc1List, pvalList) =
           vctest(y, X, gSNP, WPreSim = WPreSim, tests = test,
@@ -184,7 +197,8 @@
                  lambda = lambda, W = W, nPreRank = nPreRank,
                  tmpmat0 = tmpmat0, tmpmat1 = tmpmat1, tmpmat2 = tmpmat2,
                  tmpmat3 = tmpmat3, tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
-                 denomvec = denomvec, d1f = d1f, d2f = d2f, offset = offset);
+                 denomvec = denomvec, d1f = d1f, d2f = d2f, offset = offset,
+                 nPtsChi2 = nPtsChi2, simnull = simnull);
       end
 
     else
@@ -234,7 +248,8 @@
                lambda = lambda, W = W, nPreRank = nPreRank,
                tmpmat0 = tmpmat0, tmpmat1 = tmpmat1, tmpmat2 = tmpmat2,
                tmpmat3 = tmpmat3, tmpmat4 = tmpmat4, tmpmat5 = tmpmat5,
-               denomvec = denomvec, d1f = d1f, d2f = d2f, offset = offset);
+               denomvec = denomvec, d1f = d1f, d2f = d2f, offset = offset,
+               nPtsChi2 = nPtsChi2, simnull = simnull);
 
     end
 
