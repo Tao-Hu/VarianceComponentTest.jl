@@ -415,8 +415,9 @@
     # score test statistic
     #statScore = norm(r' * sqrtV) ^ 2 / norm(r) ^ 2;
     statScore = norm(BLAS.gemv('T', sqrtV, r)) ^ 2 / norm(r) ^ 2;
-    statScore = max(statScore, sum(evalV) / n);
+    #statScore = max(statScore, sum(evalV) / n);
 
+    #=
     # obtain p-value for testing vc1=0
     vc1_pvalue = vctestnullsim(statScore, evalV, evalAdjV, n, rankX,
                                WPreSim, test = "eScore",
@@ -439,6 +440,17 @@
                                denomvec = denomvec,
                                d1f = d1f, d2f = d2f, offset = offset,
                                nPtsChi2 = nPtsChi2, simnull = simnull);
+    =#
+
+    if statScore <= sum(evalV) / n
+      vc1_pvalue = 1.0;
+    else
+      w = [evalAdjV - statScore; - statScore];
+      dfvec = [ones(Int, rankAdjV); n - rankX - rankAdjV];
+      fun(x) = imag(prod((1 - 2 .* w * x * im) .^ (- dfvec / 2)) / x);
+      (vc1_pvalue, err) = quadgk(fun, 0, Inf);
+      vc1_pvalue = 0.5 + vc1_pvalue / pi;
+    end
 
     # return values
     return b, vc0, vc1, vc1_pvalue;
