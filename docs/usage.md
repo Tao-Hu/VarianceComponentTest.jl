@@ -28,9 +28,9 @@ $ julia -E 'using ExactVarianceComponentTest; gwasvctest(Name = Value)'
 
 Consider a standard linear mixed model
 
-<img src="lmm.png" align="middle" height="100" >
+<a href="url"><img src="lmm.png" align="middle" height="100" ></a>
 
-where <img src="y.png" align="bottom" height="10" > is a vector of quantitative phenotype, <a href="url"><img src="X.png" align="bottom" height="10" ></a> is covariate matrix, <a href="url"><img src="beta.png" align="bottom" height="12" ></a> is a vector of fixed effects, <a href="url"><img src="G.png" align="bottom" height="10" ></a> is genotype matrix for *m* genetic variants, <a href="url"><img src="gamma.png" align="bottom" height="12" ></a> is their effects and follows an normal distribution with variance <a href="url"><img src="sigmagW.png" align="bottom" height="15" ></a>, <a href="url"><img src="u.png" align="bottom" height="10" ></a> is vector of random effects included to control familial or structural correlation in the sample, and <a href="url"><img src="epsilon.png" align="bottom" height="10" ></a> is vector for the error. <a href="url"><img src="Phi.png" align="bottom" height="12" ></a> is the theoretical kinship matrix or estimated relationship matrix by whole-genome genotypes. <a href="url"><img src="sigmag.png" align="top" height="18" ></a>, <a href="url"><img src="sigmaa.png" align="top" height="18" ></a> and <a href="url"><img src="sigmae.png" align="top" height="18" ></a> are corresponding variance component parameters from SNP-Set, additive genetic and environmental effects. Therefore,
+where <a href="url"><img src="y.png" align="bottom" height="10" ></a> is a vector of quantitative phenotype, <a href="url"><img src="X.png" align="bottom" height="10" ></a> is covariate matrix, <a href="url"><img src="beta.png" align="bottom" height="12" ></a> is a vector of fixed effects, <a href="url"><img src="G.png" align="bottom" height="10" ></a> is genotype matrix for *m* genetic variants, <a href="url"><img src="gamma.png" align="bottom" height="12" ></a> is their effects and follows an normal distribution with variance <a href="url"><img src="sigmagW.png" align="bottom" height="15" ></a>, W is prespecified diagonal weight matrix for the genetic variants, <a href="url"><img src="u.png" align="bottom" height="10" ></a> is vector of random effects included to control familial or structural correlation in the sample, and <a href="url"><img src="epsilon.png" align="bottom" height="10" ></a> is vector for the error. <a href="url"><img src="Phi.png" align="bottom" height="12" ></a> is the theoretical kinship matrix or estimated relationship matrix by whole-genome genotypes. <a href="url"><img src="sigmag.png" align="top" height="18" ></a>, <a href="url"><img src="sigmaa.png" align="top" height="18" ></a> and <a href="url"><img src="sigmae.png" align="top" height="18" ></a> are corresponding variance component parameters from SNP-Set, additive genetic and environmental effects. Therefore,
 
 <a href="url"><img src="Vary.png" align="middle" height="25" ></a>
 
@@ -147,6 +147,17 @@ Option `kinship` indicates how to obtain the kinship matrix <a href="url"><img s
 The default value for option `kinship` is *GRM*.
 
 ---
+## Choose weights for SNP-set effect
+
+Option `snpWtType` indicates the diagonal elements for the diagonal weight matrix W for each SNP-set. The usage is
+
+* `gwasvctest(snpWtType = "")`: Constant weights, *i.e.*, set all weights to 1
+* `gwasvctest(snpWtType = "beta")`: Beta weights, *i.e.*, set the weights by a beta distribution Beta(1, 25) evaluated at MAF for each SNP
+* `gwasvctest(snpWtType = "invvar")`: Inverse variance weights, *i.e.*, set the weights by inverse variance 1/sqrt(MAF*(1-MAF))
+
+The default value for option `snpWtType` is empty.
+
+---
 ## Choose method for computing kernel matrix
 
 Option `kernel` indicates how to obtain kernel matrix <a href="url"><img src="S.png" align="bottom" height="10" ></a>. The usage is
@@ -157,6 +168,22 @@ Option `kernel` indicates how to obtain kernel matrix <a href="url"><img src="S.
 * `gwasvctest(kernel = "IBS3")`: compute kernel matrix by *IBS3*.
 
 The default value for option `kernel` is *GRM*.
+
+The standard IBS kernel values are showed in following tables
+
+Table 1: IBS1 Kernel Values    ||   Table 2: IBS2 Kernel Values    ||   Table 3: IBS3 Kernel Values
+
+|i/j     | 1/1 | 1/2 | 2/2 |   ||   |i/j     | 1/1 | 1/2 | 2/2 |   ||   |i/j     | 1/1 | 1/2 | 2/2 |
+|:-------|:----|:----|:----|   ||   |:-------|:----|:----|:----|   ||   |:-------|:----|:----|:----|
+|**1/1** | 1   | 0.5 | 0   |   ||   |**1/1** | 0.5 | 0.5 | 0   |   ||   |**1/1** | 1   | 0.5 | 0   |
+|**1/2** | 0.5 | 0.5 | 0.5 |   ||   |**1/2** | 0.5 | 1   | 0.5 |   ||   |**1/2** | 0.5 | 1   | 0.5 |
+|**2/2** | 0   | 0.5 | 1   |   ||   |**2/2** | 0   | 0.5 | 0.5 |   ||   |**2/2** | 0   | 0.5 | 1   |
+
+where *i* and *j* indicate two individuals. The IBS kernels are determined by
+
+<a href="url"><img src="kernelIBS.png" align="middle" height="50" ></a>
+
+where *w*'s are the weights for the *m* SNPs, <a href="url"><img src="Gammas.png" align="bottom" height="12" ></a> is the covariance matrix depending only on the genotypes at SNP *s*. The values of <a href="url"><img src="Gammas.png" align="bottom" height="12" ></a> are read from the above three tables.
 
 ---
 ## Determine the rank used to approximate the kinship matrix
