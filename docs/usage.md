@@ -23,12 +23,22 @@ julia> gwasvctest(Name = Value)
 $ julia -E 'using ExactVarianceComponentTest; gwasvctest(Name = Value)'
 ```
 
-Next, all options are listed below.
-
 ---
 ## Background
 
-??? Need to add some background introductions for the algorithm.
+Consider a standard linear mixed model
+
+<a href="url"><img src="lmm.png" align="middle" height="100" ></a>
+
+where <a href="url"><img src="y.png" align="bottom" height="10" ></a> is a vector of quantitative phenotype, <a href="url"><img src="X.png" align="bottom" height="10" ></a> is covariate matrix, <a href="url"><img src="beta.png" align="bottom" height="12" ></a> is a vector of fixed effects, <a href="url"><img src="G.png" align="bottom" height="10" ></a> is genotype matrix for *m* genetic variants, <a href="url"><img src="gamma.png" align="bottom" height="12" ></a> is their effects and follows an normal distribution with variance <a href="url"><img src="sigmagW.png" align="bottom" height="15" ></a>, <a href="url"><img src="u.png" align="bottom" height="10" ></a> is vector of random effects included to control familial or structural correlation in the sample, and <a href="url"><img src="epsilon.png" align="bottom" height="10" ></a> is vector for the error. <a href="url"><img src="Phi.png" align="bottom" height="12" ></a> is the theoretical kinship matrix or estimated relationship matrix by whole-genome genotypes. <a href="url"><img src="sigmag.png" align="top" height="18" ></a>, <a href="url"><img src="sigmaa.png" align="top" height="18" ></a> and <a href="url"><img src="sigmae.png" align="top" height="18" ></a> are corresponding variance component parameters from SNP-Set, additive genetic and environmental effects. Therefore,
+
+<a href="url"><img src="Vary.png" align="middle" height="25" ></a>
+
+where <a href="url"><img src="kernel.png" align="bottom" height="12" ></a> is the kernel matrix capturing effects from the SNP set. This software is designed to test <a href="url"><img src="H0.png" align="bottom" height="18" ></a> v.s. <a href="url"><img src="H1.png" align="bottom" height="18" ></a>. For unrelated sample, <a href="url"><img src="sigmaa.png" align="top" height="18" ></a> is zero, thus the model reduce to
+
+<a href="url"><img src="Varyred.png" align="middle" height="25" ></a>
+
+The detailed descriptions of our algorithms and implementations are ??? add manuscript here ???.
 
 ---
 ## Specify input PLINK files
@@ -97,53 +107,61 @@ Replace "/PATH/OF/" with the path where you want to store the output file. If op
 The default value for option `test` is *eRLRT*.
 
 ---
-## Choose method for obtaining null distribution of test statistic and computing p-value
+## Choose method for computing p-value
 
-Option `pvalueComputing` indicates which method will be used to obtain the null distribution of test statistic. The usage is
+Option `pvalueComputing` indicates which method will be used to obtain the p-value under null hypothesis. The usage is
 
-* `gwasvctest(pvalueComputing = "MonteCarlo")`: use a Monte Carlo method by generating many replicates to obtain the exact null distribution of test statistic
-* `gwasvctest(pvalueComputing = "chi2")`: use a mixed Chi squared distribution to approximate the null distribution of test statistic.
+* `gwasvctest(pvalueComputing = "MonteCarlo")`: use a Monte Carlo method by generating many replicates to obtain the exact null distribution of test statistic and then compute the p-value.
+* `gwasvctest(pvalueComputing = "chi2")`: use a mixed Chi squared distribution to approximate the null distribution of test statistic and then compute the p-value.
 
 The default value for option `pvalueComputing` is *chi2*. The approximation effect of mixed Chi squared distribution has been showed to be good enough, and such approximation will be faster than Monte Carlo method since much less replicates need to be generated. So please use *chi2* whenever possible.
 
----
-## Choose number of replicates to generate for obtaining null distribution of test statistic
+**Note**:
 
-Option `nNullSimPts` lets you to decide how many replicates to generate for obtaining null distribution of test statistic.
+1. Option `pvalueComputing` is only valid for eLRT and eRLRT, since this software employs the method of inverting characteristics function to compute the p-value for eScore.
+2. In the approximation method, the exact null distributions of eLRT and eRLRT are approximated by a mixture of form <a href="url"><img src="mixchi2.png" align="bottom" height="15" ></a>, where the point mass <a href="url"><img src="pi0.png" align="bottom" height="10" ></a> at 0, scale parameter <a href="url"><img src="a.png" align="bottom" height="8" ></a>, and the degree of freedom <a href="url"><img src="b.png" align="bottom" height="12" ></a> for the chi-squared distribution need to be determined for each SNP-set. First, estimate <a href="url"><img src="pi0.png" align="bottom" height="10" ></a> by generating B replicates (the number of replicates B is specified by option `nNullSimPts`), and then estimate <a href="url"><img src="a.png" align="bottom" height="8" ></a> and <a href="url"><img src="b.png" align="bottom" height="12" ></a> using only a small number (300 by default) of replicates.
+
+---
+## Choose number of replicates to generate for obtaining null distribution of test statistic and p-value
+
+Option `nNullSimPts` lets you to decide how many replicates to generate for obtaining null distribution of test statistic and p-value.
 
 * For `pvalueComputing = "MonteCarlo"`, the more replicates to generate, the more precise the p-value will be (smaller standard error)
-* For `pvalueComputing = "chi2"`, the number of replicates does not count too much, it only effect the estimate of probability at zero for test statistic
+* For `pvalueComputing = "chi2"`, the number of replicates does not matter too much, it only effect the estimate of point mass <a href="url"><img src="pi0.png" align="bottom" height="10" ></a> at 0 for test statistic
 
 `nNullSimPts` should take positive integer, and the default value is 10,000.
+
+**Note**: Option `nNullSimPts` is only valid for eLRT and eRLRT.
 
 ---
 ## Choose method for computing kinship matrix
 
-Option `kinship` indicates how to obtain the kinship matrix. The usage is
+Option `kinship` indicates how to obtain the kinship matrix <a href="url"><img src="Phi.png" align="bottom" height="12" ></a>. The usage is
 
-* `gwasvctest(kinship = "GRM")`: compute kinship matrix by genetic relationship matrix (GRM)
-* `gwasvctest(kinship = "MoM")`: compute kinship matrix by method of moments (MoM)
-* `gwasvctest(kinship = "theoretical")`: compute kinship matrix theoretically
-* `gwasvctest(kinship = "none")`: replace *none* with the file name in which store your own pre-calculated kinship matrix
+* `gwasvctest(kinship = "none")`: Not include kinship matrix <a href="url"><img src="Phi.png" align="bottom" height="12" ></a> in the model, which means there are two terms in the variance structure of response: SNP-set effect and random environmental effect.
+* `gwasvctest(kinship = "GRM")`: compute kinship matrix <a href="url"><img src="Phi.png" align="bottom" height="12" ></a> by genetic relationship matrix (GRM). The algorithm is provided in section 2.3 by [*Zhou et al.*](http://arxiv.org/pdf/1407.8253v2.pdf)
+* `gwasvctest(kinship = "MoM")`: compute kinship matrix <a href="url"><img src="Phi.png" align="bottom" height="12" ></a> by method of moments (MoM). The algorithm is provided in section 2.3 by [*Zhou et al.*](http://arxiv.org/pdf/1407.8253v2.pdf)
+* `gwasvctest(kinship = "theoretical")`: compute kinship matrix <a href="url"><img src="Phi.png" align="bottom" height="12" ></a> theoretically.
+* `gwasvctest(kinship = "FILE")`: replace *FILE* with the file name in which store your own pre-calculated kinship matrix <a href="url"><img src="Phi.png" align="bottom" height="12" ></a>.
 
 The default value for option `kinship` is *GRM*.
 
 ---
 ## Choose method for computing kernel matrix
 
-Option `kernel` indicates how to obtain kernel matrix. The usage is
+Option `kernel` indicates how to obtain kernel matrix <a href="url"><img src="S.png" align="bottom" height="10" ></a>. The usage is
 
-* `gwasvctest(kernel = "GRM")`: compute kernel matrix by genetic relationship matrix (GRM)
-* `gwasvctest(kernel = "IBS1")`
-* `gwasvctest(kernel = "IBS2")`
-* `gwasvctest(kernel = "IBS3")`
+* `gwasvctest(kernel = "GRM")`: compute kernel matrix <a href="url"><img src="S.png" align="bottom" height="10" ></a> by genetic relationship matrix (GRM), *i.e.* <a href="url"><img src="kernelGRM.png" align="bottom" height="12" ></a>, where <a href="url"><img src="G.png" align="bottom" height="10" ></a> is genotype matrix.
+* `gwasvctest(kernel = "IBS1")`: compute kernel matrix by *IBS1*.
+* `gwasvctest(kernel = "IBS2")`: compute kernel matrix by *IBS2*.
+* `gwasvctest(kernel = "IBS3")`: compute kernel matrix by *IBS3*.
 
 The default value for option `kernel` is *GRM*.
 
 ---
 ## Determine the rank used to approximate the kinship matrix
 
-In our algorithm, we do a low rank approximation of kinship matrix to reduce the multiple variances components testing problem to two variance components problem. However, there is a trade-off for choosing the rank for approximating: if the rank is high, then a better approximation can be obtained, but a high rank will lead to a small signal-to-noise ratio, which will decrease the power of test.
+In our algorithm, we do a low rank approximation of kinship matrix <a href="url"><img src="Phi.png" align="bottom" height="12" ></a> to reduce the multiple variances components testing problem to two variance components problem. However, there is a trade-off for choosing the rank for approximating: if the rank is high, then a better approximation can be obtained, but a high rank will lead to a small signal-to-noise ratio, which will decrease the power of test.
 
 Option `infLambda` provides a way to control such trade-off. Theoretically, `infLambda` can take any real value. If `infLambda` takes non positive value, then the algorithm will take the highest possible approximating rank. If `infLambda` takes a positive value, the algorithm will take a smaller approximating rank, and the larger the value is, the smaller the approximating rank will be. The default value is 0.
 
