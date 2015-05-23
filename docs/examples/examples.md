@@ -19,7 +19,7 @@ Three types of exact tests can be performed. Open up a Julia session and type
 
 ```julia
 julia> using ExactVarianceComponentTest
-julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eLRT")
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "none", test = "eLRT")
 ```
 
 Then the output will be written to `chr3-geno-MAP4-849.out` at current directory.
@@ -28,14 +28,14 @@ Then the output will be written to `chr3-geno-MAP4-849.out` at current directory
 
 ```julia
 julia> using ExactVarianceComponentTest
-julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT")
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "none", test = "eRLRT")
 ```
 
 * exact score test (eSC)
 
 ```julia
 julia> using ExactVarianceComponentTest
-julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eScore")
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "none", test = "eScore")
 ```
 
 **Note**: if the input files are not at the current directory, you should specify the paths correctly.
@@ -43,7 +43,7 @@ julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.
 You can also call *gwasvctest* from command line. For example, to perform eRLRT
 
 ```
-$ julia -E 'using ExactVarianceComponentTest; gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT")'
+$ julia -E 'using ExactVarianceComponentTest; gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "none", test = "eRLRT")'
 ```
 
 ---
@@ -53,15 +53,17 @@ Chi squared approximation is recommended (though you don't have to write it out 
 
 ```julia
 julia> using ExactVarianceComponentTest
-julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT", pvalueComputing = "chi2")
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "none", test = "eRLRT", pvalueComputing = "chi2")
 ```
 
 If you want to use Monte Carlo method
 
 ```julia
 julia> using ExactVarianceComponentTest
-julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT", pvalueComputing = "MonteCarlo")
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "none", test = "eRLRT", pvalueComputing = "MonteCarlo")
 ```
+
+**Note**: Option `pvalueComputing` is only for eLRT and eRLRT. For eScore, it employs the method of inverting characteristics function to compute the p-value.
 
 ---
 ## Option `nNullSimPts`
@@ -70,7 +72,7 @@ If Monte Carlo method is chosen and you want to increase the precision of p-valu
 
 ```julia
 julia> using ExactVarianceComponentTest
-julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT", pvalueComputing = "MonteCarlo", nNullSimPts = 100000)
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "none", test = "eRLRT", pvalueComputing = "MonteCarlo", nNullSimPts = 100000)
 ```
 
 ---
@@ -80,11 +82,25 @@ If the annotation information of the markers is available, you can share it by i
 
 ```julia
 julia> using ExactVarianceComponentTest
-julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT", annotationFile = "annotation.txt")
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "none", test = "eRLRT", annotationFile = "annotation.txt")
 ```
 
 ---
 ## Option `kinship`
+
+For the analysis of unrelated data, the kinship matrix should not be included in the model. So you should specify option `kinship` as *none*
+
+```julia
+julia> using ExactVarianceComponentTest
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", test = "eRLRT", kinship = "none")
+```
+
+If you have family data and have a file (*gaw18_849_kinship.txt* in this example) which contains the kinship matrix
+
+```julia
+julia> using ExactVarianceComponentTest
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", test = "eRLRT", kinship = "gaw18_849_kinship.txt")
+```
 
 It's okay if you don't have the kinship file
 
@@ -96,12 +112,14 @@ julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.
 ---
 ## Option `infLambda`
 
-If you are concerning about too high approximating rank, use option `infLambda` to set a lower rank
+If you are concerning about too high approximating rank for the kinship matrix, use option `infLambda` to set a lower rank
 
 ```julia
 julia> using ExactVarianceComponentTest
 julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT", infLambda = 1.0)
 ```
+
+**Note**: If you are analyzing unrelated data, you can ignore option `infLambda` since the kinship matrix will not be included in the model in unrelated case.
 
 ---
 ## Parallel computing
@@ -111,13 +129,13 @@ If your machine has multiple cores, and annotation file is available, you can ac
 ```julia
 julia> addprocs(4)
 julia> @everywhere using ExactVarianceComponentTest
-julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT", annotationFile = "annotation.txt")
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "none", test = "eRLRT", annotationFile = "annotation.txt")
 ```
 
 You can also call the function from command line
 
 ```
-$ julia -p 4 -E '@everywhere using ExactVarianceComponentTest; gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "gaw18_849_kinship.txt", test = "eRLRT", annotationFile = "annotation.txt")'
+$ julia -p 4 -E '@everywhere using ExactVarianceComponentTest; gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "none", test = "eRLRT", annotationFile = "annotation.txt")'
 ```
 
 **Note**: annotation file must be provided if you want to take advantage of parallel computing.

@@ -171,6 +171,8 @@ For example, want to take the highest rank, then
 gwasvctest(infLambda = 0.0)
 ```
 
+**Note**: If you are analyzing unrelated data, you can ignore option `infLambda` since the kinship matrix will not be included in the model in unrelated case.
+
 ---
 ## Determine the group size for each SNP set
 
