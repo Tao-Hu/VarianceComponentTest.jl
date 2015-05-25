@@ -234,7 +234,7 @@ $ julia -p n -E 'using ExactVarianceComponentTest; gwasvctest(Name = Value)'
 
 where *n* has the same meaning as above.
 
-Currently, the parallel computing mode is only supported when annotation file is provided. A concrete example is provided at the Example part.
+A concrete example is provided at the Example part.
 
 **Note**: In Linux system, you can use the following shell command to count the number of cores on your CPU
 
