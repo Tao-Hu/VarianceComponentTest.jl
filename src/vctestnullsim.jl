@@ -78,9 +78,9 @@
         ppw = pointer(partialSumWConst);
         ptw = pointer(totalSumWConst);
         pppw = pointer(PrePartialSumW) +
-          (rankAdjV - 1) * nSimPts * sizeof(Float64);
+          rankAdjV * nSimPts * sizeof(Float64);
         pptw = pointer(PreTotalSumW) +
-          (rankAdjV - 1) * nSimPts * sizeof(Float64);
+          rankAdjV * nSimPts * sizeof(Float64);
         BLAS.blascopy!(nSimPts, pppw, 1, ppw, 1);
         BLAS.blascopy!(nSimPts, pptw, 1, ptw, 1);
       end

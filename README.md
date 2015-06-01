@@ -19,4 +19,3 @@ Pkg.add("ExactVarianceComponentTest")
 
 ## Documentation (Implement by [*Read the Docs*](https://readthedocs.org/))
 
-## Quick Example

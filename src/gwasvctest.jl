@@ -502,22 +502,23 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
   end
 
   # simulate Chi Squares and sums of Chi Squares
-  PrePartialSumW = Array(Float64, nNullSimPts, nPreRank);
-  PreTotalSumW = Array(Float64, nNullSimPts, nPreRank);
+  PrePartialSumW = Array(Float64, nNullSimPts, nPreRank+1);
+  PreTotalSumW = Array(Float64, nNullSimPts, nPreRank+1);
   tmpSumVec = Array(Float64, nNullSimPts);
   p1 = pointer(PrePartialSumW);
-  BLAS.blascopy!(nNullSimPts, rand(Chisq(tmpn - 1), nNullSimPts), 1, p1, 1);
+  BLAS.blascopy!(nNullSimPts, rand(Chisq(tmpn), nNullSimPts), 1, p1, 1);
   for i = 1 : nNullSimPts
-    pW = pointer(WPreSim) + (i - 1) * windowSize * sizeof(Float64);
-    tmpSumVec[i] = BLAS.asum(1, pW, 1);
+    #pW = pointer(WPreSim) + (i - 1) * windowSize * sizeof(Float64);
+    #tmpSumVec[i] = BLAS.asum(1, pW, 1);
+    tmpSumVec[i] = 0.0;
     PreTotalSumW[i, 1] = tmpSumVec[i] + PrePartialSumW[i, 1];
   end
-  for j = 2 : nPreRank
-    p1 = pointer(PrePartialSumW) + (j - 1) * nNullSimPts * sizeof(Float64);
+  for j = 1 : nPreRank
+    p1 = pointer(PrePartialSumW) + j * nNullSimPts * sizeof(Float64);
     BLAS.blascopy!(nNullSimPts, rand(Chisq(tmpn - j), nNullSimPts), 1, p1, 1);
     for i = 1 : nNullSimPts
       tmpSumVec[i] += WPreSim[j, i];
-      PreTotalSumW[i, j] = tmpSumVec[i] + PrePartialSumW[i, j];
+      PreTotalSumW[i, j+1] = tmpSumVec[i] + PrePartialSumW[i, j+1];
     end
   end
 

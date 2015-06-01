@@ -140,7 +140,11 @@
     mat1 = BLAS.gemm('T', 'N', 1.0, subUX, sqrtV);
     mat2 = BLAS.gemm('N', 'N', 1.0, subUX, mat1);
     (UAdjV, evalAdjV) = svd(sqrtV - mat2, thin = false);
-    evalAdjV = evalAdjV[evalAdjV .> n * eps(maximum(evalAdjV))] .^ 2;
+    if isempty(evalAdjV)
+      evalAdjV = Float64[];
+    else
+      evalAdjV = evalAdjV[evalAdjV .> n * eps(maximum(evalAdjV))] .^ 2;
+    end
   end
   rankAdjV = length(evalAdjV);
 
