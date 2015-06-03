@@ -58,6 +58,7 @@
       else
         WPreSim = [WPreSim, newSim];
       end
+      windowSize = rankAdjV;
     end
 
     if isempty(PrePartialSumW) || isempty(PreTotalSumW)
