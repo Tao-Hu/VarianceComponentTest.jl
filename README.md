@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 [![Build Status](https://travis-ci.org/Tao-Hu/VarianceComponentTest.jl.svg?branch=master)](https://travis-ci.org/Tao-Hu/VarianceComponentTest.jl)
 [![Coverage Status](https://coveralls.io/repos/Tao-Hu/VarianceComponentTest.jl/badge.svg?branch=master)](https://coveralls.io/r/Tao-Hu/VarianceComponentTest.jl?branch=master)
 [![VarianceComponentTest](http://pkg.julialang.org/badges/VarianceComponentTest_release.svg)](http://pkg.julialang.org/?pkg=VarianceComponentTest&ver=release)
@@ -19,3 +20,8 @@ Pkg.add("VarianceComponentTest")
 
 ## Documentation (Implement by [*Read the Docs*](https://readthedocs.org/))
 
+=======
+# VarianceComponentTest
+
+[![Build Status](https://travis-ci.org/Tao-Hu/VarianceComponentTest.jl.svg?branch=master)](https://travis-ci.org/Tao-Hu/VarianceComponentTest.jl)
+>>>>>>> c05a9206c56a5f8814848f1d59841a2dfded52f5
