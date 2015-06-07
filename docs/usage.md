@@ -1,6 +1,6 @@
 # Usage
 
-The core function in *ExactVarianceComponentTest.jl* is *gwasvctest*, which wraps the three types of exact tests. The usage for *gwasvctest* is
+The core function in *VarianceComponentTest.jl* is *gwasvctest*, which wraps the three types of exact tests. The usage for *gwasvctest* is
 
 ```julia
 gwasvctest(Name = Value)
@@ -13,14 +13,14 @@ There are two ways to call *gwasvctest*
 * Open up Julia and type
 
 ```julia
-julia> using ExactVarianceComponentTest
+julia> using VarianceComponentTest
 julia> gwasvctest(Name = Value)
 ```
 
 * From command line, type
 
 ```
-$ julia -E 'using ExactVarianceComponentTest; gwasvctest(Name = Value)'
+$ julia -E 'using VarianceComponentTest; gwasvctest(Name = Value)'
 ```
 
 ---
@@ -98,7 +98,7 @@ Replace "/PATH/OF/" with the path where you want to store the output file. If op
 ---
 ## Choose testing scheme
 
-*ExactVarianceComponentTest.jl* provides three types of exact tests: exact likelihood ratio test (eLRT), exact restricted likelihood ratio test (eRLRT) and exact score test (eSC). Option `test` indicates which testing scheme you want to perform. The usage is
+*ExactVarianceComponentTest.jl* provides three types of exact tests: exact likelihood ratio test (eLRT), exact restricted likelihood ratio test (eRLRT) and exact score test (eScore). Option `test` indicates which testing scheme you want to perform. The usage is
 
 * `gwasvctest(test = "eLRT")`: perform exact likelihood ratio test
 * `gwasvctest(test = "eRLRT")`: perform exact restricted likelihood ratio test
@@ -220,7 +220,7 @@ Modern computer has multiple cores usually. So you can take advantage of the par
 
 ```julia
 julia> addprocs(n)
-julia> using ExactVarianceComponentTest
+julia> using VarianceComponentTest
 julia> gwasvctest(Name = Value)
 ```
 
@@ -229,7 +229,7 @@ where *n* is the number of working processes which are employed to perform the c
 You can also active the parallel mode from command line
 
 ```
-$ julia -p n -E 'using ExactVarianceComponentTest; gwasvctest(Name = Value)'
+$ julia -p n -E 'using VarianceComponentTest; gwasvctest(Name = Value)'
 ```
 
 where *n* has the same meaning as above.

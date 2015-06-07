@@ -4,14 +4,14 @@ The type of files involved in this package can be divided into two categories: i
 
 |Name                 |Category |Extension |Description
 |:--------------------|:-------:|:--------:|:------------
-|Binary genotype file |Input    |.bed      |Binary PLINK file which contains genotypes information
-|Marker file          |Input    |.bim      |Ordinary PLINK file which contains information of markers (*e.g.* SNPs)
-|Pedigree file        |Input    |.fam      |Ordinary PLINK file which contains information of pedigrees
-|Covariates file      |Input    |.txt      |Text file which contains the values of covariates
-|Trait file           |Input    |.txt      |Text file which contains the values of traits/phenotypes
-|Annotation file      |Input    |.txt      |Text file which contains the annotation information of markers
-|Kinship file         |Input    |.txt      |Text file which contains the values of kinship matrix
-|Output file          |Output   |.out      |Flat file which contains p-values for each group of markers under certain testing scheme
+|Binary genotype file |Input    |.bed      |Binary PLINK file that contains genotypes information
+|Marker file          |Input    |.bim      |Ordinary PLINK file that contains information of markers (*e.g.* SNPs)
+|Pedigree file        |Input    |.fam      |Ordinary PLINK file that contains information of pedigrees
+|Covariates file      |Input    |.txt      |Text file that contains the values of covariates
+|Trait file           |Input    |.txt      |Text file that contains the values of traits/phenotypes
+|Annotation file      |Input    |.txt      |Text file that contains the annotation information of markers
+|Kinship file         |Input    |.txt      |Text file that contains the values of kinship matrix
+|Output file          |Output   |.out      |Flat file that contains p-values for each group of markers under certain testing scheme
 
 ---
 ## PLINK files
@@ -20,7 +20,7 @@ Three types of [PLINK files](http://pngu.mgh.harvard.edu/~purcell/plink/data.sht
 
 ### BED file
 
-BED file is a binary PLINK file which contains genotypes information. More information about the format of BED file is [here](http://pngu.mgh.harvard.edu/~purcell/plink/binary.shtml).
+BED file is a binary PLINK file that contains genotypes information. More information about the format of BED file is [here](http://pngu.mgh.harvard.edu/~purcell/plink/binary.shtml).
 
 **Note**: if you try to open the BED file in a normal editor, you will see unreadable characters.
 
@@ -28,7 +28,7 @@ The data stored in BED file are in units of byte. The actual genotypes are begin
 
 ### BIM file
 
-BIM file is an ordinary PLINK file which contains information of markers (*e.g.* SNPs). In BIM file, each line represents a SNP. The fields in BIM file are
+BIM file is an ordinary PLINK file that contains information of markers (*e.g.* SNPs). In BIM file, each line represents a SNP. The fields in BIM file are
 
 * Chromosome code (either an integer, or "X"/"Y"/"XY"/"MT", "0" indicates unknown)
 * SNP ID
@@ -52,7 +52,7 @@ Fields are separated by a whitespace. A typical BIM file looks like
 
 ### FAM file
 
-FAM file is an ordinary PLINK file which contains information of pedigrees. In FAM file, each line represents an individual. The fields in FAM file are
+FAM file is an ordinary PLINK file that contains information of pedigrees. In FAM file, each line represents an individual. The fields in FAM file are
 
 * Family ID
 * Individual ID
@@ -77,7 +77,7 @@ Fields are separated by a whitespace. A typical FAM file looks like
 ---
 ## Covariates file
 
-Covariates file is a text file which contains the values of covariates. In covariates file, each line represents an individual. The first two fields are `Family ID` and `Individual ID`, the rest fields are the covariates/predictors (*e.g.* *sex*, *age*, *weight* and *etc*). The intercept should NOT be included. Fields are separated by a whitespace. A typical covariates file look like
+Covariates file is a text file that contains the values of covariates. In covariates file, each line represents an individual. The format of covariates file is the same as that in PLINK: the first two fields are `Family ID` and `Individual ID`, the rest fields are the covariates/predictors (*e.g.* *sex*, *age*, *weight* and *etc*). The intercept should NOT be included. Fields are separated by a whitespace. A typical covariates file look like
 
 ```
 2 T2DG0200001 1.0 0.8333876751238651 0.4668769615832563 -0.7067078743064089 0.4914401659107072
@@ -95,7 +95,7 @@ If no covariates file is provided, the covariates matrix **X** will be automatic
 ---
 ## Trait file
 
-Trait file is a text file which contains the values of traits/phenotypes. In trait file, each line represents an individual. The fields in trait file are
+Trait file is a text file that contains the values of traits/phenotypes. In trait file, each line represents an individual. The format of trait file is the same as phenotype file in PLINK. The fields in trait file are
 
 * Family ID
 * Individual ID
@@ -116,7 +116,7 @@ If no trait file is provided, the response vector **y** will be set automaticall
 
 ---
 ## Annotation file
-Annotation file is a text file which contains the information about in which gene a SNP belongs to. The annotation file must satisfy two conditions: (1) it should contain annotation information of all markers in the BIM file, (2) the annotated markers in the annotation file should in increasing order in terms of which chromosome a marker is located and its physical position.
+Annotation file is a text file that contains the information about in which gene a SNP belongs to. The annotation file must satisfy two conditions: (1) it should contain annotation information of all markers in the BIM file, (2) the annotated markers in the annotation file should in increasing order in terms of which chromosome a marker is located and its physical position.
 
 In annotation file, each line represents a marker and its annotation information. The fields in annotation file are
 
@@ -136,7 +136,7 @@ gene2,3-47892574
 
 ---
 ## Kinship file
-Kinship file is a text file which contains the values of kinship matrix. If the data set which you are going to analysis contains *n* individuals, then the dimension of kinship matrix is *n*-by-*n*, which means there should be *n* rows and *n* fields in the kinship file, and fields are separated by comma.
+Kinship file is a text file that contains the values of kinship matrix. If the data set which you are going to analysis contains *n* individuals, then the dimension of kinship matrix is *n*-by-*n*, which means there should be *n* rows and *n* fields in the kinship file, and fields are separated by comma.
 
 For example, if a data set contains 5 individuals, the kinship file looks like
 
@@ -151,7 +151,7 @@ For example, if a data set contains 5 individuals, the kinship file looks like
 ---
 ## Output file
 
-Output file is a flat file which contains p-values and other information for each group of markers under certain testing scheme. In output file, each line represents for one group of markers (the first line is the header). There are two formats of the output file: one is for the case when no annotation file is provided, the other is for the case when an annotation file is provided.
+Output file is a flat file that contains p-values and other information for each group of markers under certain testing scheme. In output file, each line represents for one group of markers (the first line is the header). There are two formats of the output file: one is for the case when no annotation file is provided, the other is for the case when an annotation file is provided.
 
 #### No annotation file provided
 

@@ -1,7 +1,8 @@
-module ExactVarianceComponentTest
+module VarianceComponentTest
 
 # package code goes here
 using Distributions
+using Docile
 
 include("readgeno!.jl")
 include("readAnnotate!.jl")

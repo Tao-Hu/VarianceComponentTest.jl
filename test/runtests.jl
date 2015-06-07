@@ -1,4 +1,4 @@
-using ExactVarianceComponentTest
+using VarianceComponentTest
 using Base.Test
 
 # write your own tests here

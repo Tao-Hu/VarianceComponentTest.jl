@@ -10,4 +10,4 @@ notifications:
 # uncomment the following lines to override the default test script
 #script:
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-#  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("ExactVarianceComponentTest"); Pkg.test("ExactVarianceComponentTest"; coverage=true)'
+#  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("VarianceComponentTest"); Pkg.test("VarianceComponentTest"; coverage=true)'
