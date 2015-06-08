@@ -1,0 +1,8 @@
+site_name: Variance Component Test
+pages:
+- [index.md, Home]
+- [installation.md, Installation]
+- [dataformats.md, Dataformats]
+- [usage.md, Usage]
+- [./examples/examples.md, Examples]
+theme: readthedocs
