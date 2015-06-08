@@ -8,7 +8,7 @@ This example illustrates the usages of different options by analyzing a small da
 * Annotation file: `annotation.txt`
 * Kinship file: `gaw18_849_kinship.txt`
 
-These data files come with our package.
+These data files come with our package, and they are available at [*here*](https://github.com/Tao-Hu/VarianceComponentTest.jl/tree/master/docs/examples).
 
 ---
 ## Basic usage
