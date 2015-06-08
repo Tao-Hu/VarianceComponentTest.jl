@@ -10,11 +10,11 @@
 * exact restricted likelihood ratio test (*eRLRT*)
 * exact score test (*eScore*)
 
+Detailed documentation is [*here*](variancecomponenttestjl.readthedocs.org)
+
 ## Installation
 
 ```julia
 Pkg.update()
 Pkg.add("VarianceComponentTest")
 ```
-
-## Documentation (Implement by [*Read the Docs*](https://readthedocs.org/))
