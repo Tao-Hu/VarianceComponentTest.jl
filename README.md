@@ -10,7 +10,7 @@
 * exact restricted likelihood ratio test (*eRLRT*)
 * exact score test (*eScore*)
 
-Detailed documentation is [*here*](variancecomponenttestjl.readthedocs.org)
+Detailed documentation is [*here*](http://variancecomponenttestjl.readthedocs.org)
 
 ## Installation
 
