@@ -28,17 +28,21 @@ $ julia -E 'using VarianceComponentTest; gwasvctest(Name = Value)'
 
 Consider a standard linear mixed model
 
-<img src="https://github.com/Tao-Hu/VarianceComponentTest.jl/blob/master/docs/lmm.png" align="middle" height="100" />
+![](lmm.png)
 
-![lmm.png](lmm.png =50x20)
+where **y** is a vector of quantitative phenotype, **X** is covariate matrix, \beta is a vector of fixed effects, **G** is genotype matrix for *m* genetic variants, \gamma is their effects and follows an normal distribution, **W** is prespecified diagonal weight matrix for the genetic variants, **u** is vector of random effects included to control familial or structural correlation in the sample, and \epsilon is vector for the error. \Phi is the theoretical kinship matrix or estimated relationship matrix by whole-genome genotypes. \sigma_g^2, \sigma_a^2 and \sigma_e^2 are corresponding variance component parameters from SNP-Set, additive genetic and environmental effects. Therefore,
 
-where <img src="y.png" align="bottom" height="10" /> ![y.png](y.png) is a vector of quantitative phenotype, <a href="url"><img src="X.png" align="bottom" height="10" ></a> is covariate matrix, <a href="url"><img src="beta.png" align="bottom" height="12" ></a> is a vector of fixed effects, <a href="url"><img src="G.png" align="bottom" height="10" ></a> is genotype matrix for *m* genetic variants, <a href="url"><img src="gamma.png" align="bottom" height="12" ></a> is their effects and follows an normal distribution with variance <a href="url"><img src="sigmagW.png" align="bottom" height="15" ></a>, W is prespecified diagonal weight matrix for the genetic variants, <a href="url"><img src="u.png" align="bottom" height="10" ></a> is vector of random effects included to control familial or structural correlation in the sample, and <a href="url"><img src="epsilon.png" align="bottom" height="10" ></a> is vector for the error. <a href="url"><img src="Phi.png" align="bottom" height="12" ></a> is the theoretical kinship matrix or estimated relationship matrix by whole-genome genotypes. <a href="url"><img src="sigmag.png" align="top" height="18" ></a>, <a href="url"><img src="sigmaa.png" align="top" height="18" ></a> and <a href="url"><img src="sigmae.png" align="top" height="18" ></a> are corresponding variance component parameters from SNP-Set, additive genetic and environmental effects. Therefore,
+![](Vary.png)
 
-<a href="url"><img src="Vary.png" align="middle" height="25" ></a>
+![](kernel.png)
 
-where <a href="url"><img src="kernel.png" align="bottom" height="12" ></a> is the kernel matrix capturing effects from the SNP set. This software is designed to test <a href="url"><img src="H0.png" align="bottom" height="18" ></a> v.s. <a href="url"><img src="H1.png" align="bottom" height="18" ></a>. For unrelated sample, <a href="url"><img src="sigmaa.png" align="top" height="18" ></a> is zero, thus the model reduce to
+where **S** is the kernel matrix capturing effects from the SNP set. This software is designed to test
 
-<a href="url"><img src="Varyred.png" align="middle" height="25" ></a>
+![](H0.png)
+
+For unrelated sample, \sigma_a^2 is zero, thus the model reduce to
+
+![](Varyred.png)
 
 The detailed descriptions of our algorithms and implementations are ??? add manuscript here ???.
 
@@ -121,7 +125,11 @@ The default value for option `pvalueComputing` is *chi2*. The approximation effe
 **Note**:
 
 1. Option `pvalueComputing` is only valid for eLRT and eRLRT, since this software employs the method of inverting characteristics function to compute the p-value for eScore.
-2. In the approximation method, the exact null distributions of eLRT and eRLRT are approximated by a mixture of form <a href="url"><img src="mixchi2.png" align="bottom" height="15" ></a>, where the point mass <a href="url"><img src="pi0.png" align="bottom" height="10" ></a> at 0, scale parameter <a href="url"><img src="a.png" align="bottom" height="8" ></a>, and the degree of freedom <a href="url"><img src="b.png" align="bottom" height="12" ></a> for the chi-squared distribution need to be determined for each SNP-set. First, estimate <a href="url"><img src="pi0.png" align="bottom" height="10" ></a> by generating B replicates (the number of replicates B is specified by option `nNullSimPts`), and then estimate <a href="url"><img src="a.png" align="bottom" height="8" ></a> and <a href="url"><img src="b.png" align="bottom" height="12" ></a> using only a small number (300 by default) of replicates.
+2. In the approximation method, the exact null distributions of eLRT and eRLRT are approximated by a mixture of the form
+
+![](mixchi2.png)
+
+⋅⋅⋅where the point mass \pi_0 at 0, scale parameter *a*, and the degree of freedom *b* for the chi-squared distribution need to be determined for each SNP-set. First, estimate \pi_0 by generating B replicates (the number of replicates B is specified by option `nNullSimPts`), and then estimate *a* and *b* using only a small number (300 by default) of replicates.
 
 ---
 ## Choose number of replicates to generate for obtaining null distribution of test statistic and p-value
@@ -129,7 +137,7 @@ The default value for option `pvalueComputing` is *chi2*. The approximation effe
 Option `nNullSimPts` lets you to decide how many replicates to generate for obtaining null distribution of test statistic and p-value.
 
 * For `pvalueComputing = "MonteCarlo"`, the more replicates to generate, the more precise the p-value will be (smaller standard error)
-* For `pvalueComputing = "chi2"`, the number of replicates does not matter too much, it only effect the estimate of point mass <a href="url"><img src="pi0.png" align="bottom" height="10" ></a> at 0 for test statistic
+* For `pvalueComputing = "chi2"`, the number of replicates does not matter too much, it only effect the estimate of point mass at 0 for test statistic
 
 `nNullSimPts` should take positive integer, and the default value is 10,000.
 
@@ -138,20 +146,20 @@ Option `nNullSimPts` lets you to decide how many replicates to generate for obta
 ---
 ## Choose method for computing kinship matrix
 
-Option `kinship` indicates how to obtain the kinship matrix <a href="url"><img src="Phi.png" align="bottom" height="12" ></a>. The usage is
+Option `kinship` indicates how to obtain the kinship matrix. The usage is
 
-* `gwasvctest(kinship = "none")`: Not include kinship matrix <a href="url"><img src="Phi.png" align="bottom" height="12" ></a> in the model, which means there are two terms in the variance structure of response: SNP-set effect and random environmental effect.
-* `gwasvctest(kinship = "GRM")`: compute kinship matrix <a href="url"><img src="Phi.png" align="bottom" height="12" ></a> by genetic relationship matrix (GRM). The algorithm is provided in section 2.3 by [*Zhou et al.*](http://arxiv.org/pdf/1407.8253v2.pdf)
-* `gwasvctest(kinship = "MoM")`: compute kinship matrix <a href="url"><img src="Phi.png" align="bottom" height="12" ></a> by method of moments (MoM). The algorithm is provided in section 2.3 by [*Zhou et al.*](http://arxiv.org/pdf/1407.8253v2.pdf)
-* `gwasvctest(kinship = "theoretical")`: compute kinship matrix <a href="url"><img src="Phi.png" align="bottom" height="12" ></a> theoretically.
-* `gwasvctest(kinship = "FILE")`: replace *FILE* with the file name in which store your own pre-calculated kinship matrix <a href="url"><img src="Phi.png" align="bottom" height="12" ></a>.
+* `gwasvctest(kinship = "none")`: Not include kinship matrix in the model, which means there are two terms in the variance structure of response: SNP-set effect and random environmental effect.
+* `gwasvctest(kinship = "GRM")`: compute kinship matrix by genetic relationship matrix (GRM). The algorithm is provided in section 2.3 by [*Zhou et al.*](http://arxiv.org/pdf/1407.8253v2.pdf)
+* `gwasvctest(kinship = "MoM")`: compute kinship matrix by method of moments (MoM). The algorithm is provided in section 2.3 by [*Zhou et al.*](http://arxiv.org/pdf/1407.8253v2.pdf)
+* `gwasvctest(kinship = "theoretical")`: compute kinship matrix theoretically.
+* `gwasvctest(kinship = "FILE")`: replace *FILE* with the file name in which store your own pre-calculated kinship matrix.
 
 The default value for option `kinship` is *GRM*.
 
 ---
 ## Choose weights for SNP-set effect
 
-Option `snpWtType` indicates the diagonal elements for the diagonal weight matrix W for each SNP-set. The usage is
+Option `snpWtType` indicates the diagonal elements for the diagonal weight matrix **W** for each SNP-set. The usage is
 
 * `gwasvctest(snpWtType = "")`: Constant weights, *i.e.*, set all weights to 1
 * `gwasvctest(snpWtType = "beta")`: Beta weights, *i.e.*, set the weights by a beta distribution Beta(1, 25) evaluated at MAF for each SNP
@@ -162,9 +170,9 @@ The default value for option `snpWtType` is empty.
 ---
 ## Choose method for computing kernel matrix
 
-Option `kernel` indicates how to obtain kernel matrix <a href="url"><img src="S.png" align="bottom" height="10" ></a>. The usage is
+Option `kernel` indicates how to obtain kernel matrix **S**. The usage is
 
-* `gwasvctest(kernel = "GRM")`: compute kernel matrix <a href="url"><img src="S.png" align="bottom" height="10" ></a> by genetic relationship matrix (GRM), *i.e.* <a href="url"><img src="kernelGRM.png" align="bottom" height="12" ></a>, where <a href="url"><img src="G.png" align="bottom" height="10" ></a> is genotype matrix.
+* `gwasvctest(kernel = "GRM")`: compute kernel matrix **S** by genetic relationship matrix (GRM), *i.e.* **S**=**GG**', where **G** is genotype matrix.
 * `gwasvctest(kernel = "IBS1")`: compute kernel matrix by *IBS1*.
 * `gwasvctest(kernel = "IBS2")`: compute kernel matrix by *IBS2*.
 * `gwasvctest(kernel = "IBS3")`: compute kernel matrix by *IBS3*.
@@ -173,24 +181,24 @@ The default value for option `kernel` is *GRM*.
 
 The standard IBS kernel values are showed in following tables
 
-Table 1: IBS1 Kernel Values    ||   Table 2: IBS2 Kernel Values    ||   Table 3: IBS3 Kernel Values
+Table 1: IBS1 Kernel Values  || Table 2: IBS2 Kernel Values  || Table 3: IBS3 Kernel Values
 
-|i/j     | 1/1 | 1/2 | 2/2 |   ||   |i/j     | 1/1 | 1/2 | 2/2 |   ||   |i/j     | 1/1 | 1/2 | 2/2 |
-|:-------|:----|:----|:----|   ||   |:-------|:----|:----|:----|   ||   |:-------|:----|:----|:----|
-|**1/1** | 1   | 0.5 | 0   |   ||   |**1/1** | 0.5 | 0.5 | 0   |   ||   |**1/1** | 1   | 0.5 | 0   |
-|**1/2** | 0.5 | 0.5 | 0.5 |   ||   |**1/2** | 0.5 | 1   | 0.5 |   ||   |**1/2** | 0.5 | 1   | 0.5 |
-|**2/2** | 0   | 0.5 | 1   |   ||   |**2/2** | 0   | 0.5 | 0.5 |   ||   |**2/2** | 0   | 0.5 | 1   |
+|i/j     | 1/1 | 1/2 | 2/2 | || |i/j     | 1/1 | 1/2 | 2/2 | || |i/j     | 1/1 | 1/2 | 2/2 |
+|:-------|:----|:----|:----| || |:-------|:----|:----|:----| || |:-------|:----|:----|:----|
+|**1/1** | 1   | 0.5 | 0   | || |**1/1** | 0.5 | 0.5 | 0   | || |**1/1** | 1   | 0.5 | 0   |
+|**1/2** | 0.5 | 0.5 | 0.5 | || |**1/2** | 0.5 | 1   | 0.5 | || |**1/2** | 0.5 | 1   | 0.5 |
+|**2/2** | 0   | 0.5 | 1   | || |**2/2** | 0   | 0.5 | 0.5 | || |**2/2** | 0   | 0.5 | 1   |
 
 where *i* and *j* indicate two individuals. The IBS kernels are determined by
 
-<a href="url"><img src="kernelIBS.png" align="middle" height="50" ></a>
+![](kernelIBS.png)
 
-where *w*'s are the weights for the *m* SNPs, <a href="url"><img src="Gammas.png" align="bottom" height="12" ></a> is the covariance matrix depending only on the genotypes at SNP *s*. The values of <a href="url"><img src="Gammas.png" align="bottom" height="12" ></a> are read from the above three tables.
+where *w*'s are the weights for the *m* SNPs, \Gamma_s is the covariance matrix depending only on the genotypes at SNP *s*. The values of \Gamma_s are read from the above three tables.
 
 ---
 ## Determine the rank used to approximate the kinship matrix
 
-In our algorithm, we do a low rank approximation of kinship matrix <a href="url"><img src="Phi.png" align="bottom" height="12" ></a> to reduce the multiple variances components testing problem to two variance components problem. However, there is a trade-off for choosing the rank for approximating: if the rank is high, then a better approximation can be obtained, but a high rank will lead to a small signal-to-noise ratio, which will decrease the power of test.
+In our algorithm, we do a low rank approximation of kinship matrix to reduce the multiple variances components testing problem to two variance components problem. However, there is a trade-off for choosing the rank for approximating: if the rank is high, then a better approximation can be obtained, but a high rank will lead to a small signal-to-noise ratio, which will decrease the power of test.
 
 Option `infLambda` provides a way to control such trade-off. Theoretically, `infLambda` can take any real value. If `infLambda` takes non positive value, then the algorithm will take the highest possible approximating rank. If `infLambda` takes a positive value, the algorithm will take a smaller approximating rank, and the larger the value is, the smaller the approximating rank will be. The default value is 0.
 
