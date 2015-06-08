@@ -30,7 +30,7 @@ Consider a standard linear mixed model
 
 <img src="https://github.com/Tao-Hu/VarianceComponentTest.jl/blob/master/docs/lmm.png" align="middle" height="100" />
 
-![lmm.png](lmm.png)
+![lmm.png](lmm.png =50x20)
 
 where <img src="y.png" align="bottom" height="10" /> ![y.png](y.png) is a vector of quantitative phenotype, <a href="url"><img src="X.png" align="bottom" height="10" ></a> is covariate matrix, <a href="url"><img src="beta.png" align="bottom" height="12" ></a> is a vector of fixed effects, <a href="url"><img src="G.png" align="bottom" height="10" ></a> is genotype matrix for *m* genetic variants, <a href="url"><img src="gamma.png" align="bottom" height="12" ></a> is their effects and follows an normal distribution with variance <a href="url"><img src="sigmagW.png" align="bottom" height="15" ></a>, W is prespecified diagonal weight matrix for the genetic variants, <a href="url"><img src="u.png" align="bottom" height="10" ></a> is vector of random effects included to control familial or structural correlation in the sample, and <a href="url"><img src="epsilon.png" align="bottom" height="10" ></a> is vector for the error. <a href="url"><img src="Phi.png" align="bottom" height="12" ></a> is the theoretical kinship matrix or estimated relationship matrix by whole-genome genotypes. <a href="url"><img src="sigmag.png" align="top" height="18" ></a>, <a href="url"><img src="sigmaa.png" align="top" height="18" ></a> and <a href="url"><img src="sigmae.png" align="top" height="18" ></a> are corresponding variance component parameters from SNP-Set, additive genetic and environmental effects. Therefore,
 
