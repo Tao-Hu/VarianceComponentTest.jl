@@ -127,9 +127,9 @@ The default value for option `pvalueComputing` is *chi2*. The approximation effe
 1. Option `pvalueComputing` is only valid for eLRT and eRLRT, since this software employs the method of inverting characteristics function to compute the p-value for eScore.
 2. In the approximation method, the exact null distributions of eLRT and eRLRT are approximated by a mixture of the form
 
-![](mixchi2.png)
+   ![](mixchi2.png)
 
-⋅⋅⋅where the point mass \pi_0 at 0, scale parameter *a*, and the degree of freedom *b* for the chi-squared distribution need to be determined for each SNP-set. First, estimate \pi_0 by generating B replicates (the number of replicates B is specified by option `nNullSimPts`), and then estimate *a* and *b* using only a small number (300 by default) of replicates.
+   where the point mass \pi_0 at 0, scale parameter *a*, and the degree of freedom *b* for the chi-squared distribution need to be determined for each SNP-set. First, estimate \pi_0 by generating B replicates (the number of replicates B is specified by option `nNullSimPts`), and then estimate *a* and *b* using only a small number (300 by default) of replicates.
 
 ---
 ## Choose number of replicates to generate for obtaining null distribution of test statistic and p-value
