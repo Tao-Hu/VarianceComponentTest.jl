@@ -1,8 +1,13 @@
 module VarianceComponentTest
 
-# package code goes here
-using Distributions
-using Docile
+import Distributions
+import Docile
+
+export readgeno!, readAnnotate!,
+       kinshipcoef,
+       vctestnullsim, vctest,
+       loopwinFixsize, loopwinAnnot,
+       gwasvctest
 
 include("readgeno!.jl")
 include("readAnnotate!.jl")
