@@ -58,7 +58,7 @@
       else
         WPreSim = [WPreSim, newSim];
       end
-      windowSize = rankAdjV;
+      #windowSize = rankAdjV;
     end
 
     if isempty(PrePartialSumW) || isempty(PreTotalSumW)
@@ -109,7 +109,7 @@
       if pvalueComputing == "MonteCarlo"
         counter = 0;
         for i = 1 : nSimPts
-          pW = pointer(WPreSim) + (i - 1) * windowSize * sizeof(Float64);
+          pW = pointer(WPreSim) + (i - 1) * size(WPreSim, 1) * sizeof(Float64);
           if BLAS.dot(rankAdjV, pW, 1, evalAdjV, 1) / totalSumWConst[i] > threshold
             counter += 1;
             partialSumW[counter] = partialSumWConst[i];
@@ -124,7 +124,7 @@
       else
         counter = 0;
         for i = 1 : nSimPts
-          pW = pointer(WPreSim) + (i - 1) * windowSize * sizeof(Float64);
+          pW = pointer(WPreSim) + (i - 1) * size(WPreSim, 1) * sizeof(Float64);
           if BLAS.dot(rankAdjV, pW, 1, evalAdjV, 1) / totalSumWConst[i] > threshold
             counter += 1;
             if counter <= nPtsChi2
