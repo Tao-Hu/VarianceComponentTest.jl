@@ -1,7 +1,7 @@
 module VarianceComponentTest
 
-using Distributions
-using Docile
+@everywhere using Distributions
+@everywhere using Docile
 
 export
        readgeno!,
