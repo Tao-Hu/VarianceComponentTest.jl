@@ -1,12 +1,16 @@
 module VarianceComponentTest
 
-import Distributions
-import Docile
+using Distributions
+using Docile
 
-export readgeno!, readAnnotate!,
+export
+       readgeno!,
+       readAnnotate!,
        kinshipcoef,
-       vctestnullsim, vctest,
-       loopwinFixsize, loopwinAnnot,
+       vctestnullsim,
+       vctest,
+       loopwinFixsize,
+       loopwinAnnot,
        gwasvctest
 
 include("readgeno!.jl")
@@ -18,4 +22,4 @@ include("loopwinFixsize.jl")
 include("loopwinAnnot.jl")
 include("gwasvctest.jl")
 
-end # module
+end
