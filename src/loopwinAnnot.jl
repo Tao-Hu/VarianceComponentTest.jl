@@ -1,13 +1,13 @@
-@everywhere function loopwinAnnot(nReads, rawdata, grpInfo, offsetSize, snpID,
-                                  bin2geno, nPer, SNPSize, flagAnnotate,
-                                  snpWtType, keepIdx, nPerKeep, kernel,
-                                  kinship, test, XtNullBasis, WPreSim,
-                                  nBlockAscent, nMMmax, nNullSimPts, tolX,
-                                  pvalueComputing, device, nNullSimNewtonIter,
-                                  rankQPhi, evalPhiAdj, XPhitNullBasis, yShift,
-                                  y, KPhiAdj, weightedW, QPhi, PrePartialSumW,
-                                  PreTotalSumW, windowSize, nPreRank, X, snpPos,
-                                  chrID, geneName, ynew)
+function loopwinAnnot(nReads, rawdata, grpInfo, offsetSize, snpID,
+                      bin2geno, nPer, SNPSize, flagAnnotate,
+                      snpWtType, keepIdx, nPerKeep, kernel,
+                      kinship, test, XtNullBasis, WPreSim,
+                      nBlockAscent, nMMmax, nNullSimPts, tolX,
+                      pvalueComputing, device, nNullSimNewtonIter,
+                      rankQPhi, evalPhiAdj, XPhitNullBasis, yShift,
+                      y, KPhiAdj, weightedW, QPhi, PrePartialSumW,
+                      PreTotalSumW, windowSize, nPreRank, X, snpPos,
+                      chrID, geneName, ynew)
 
   QRes = Array(Float64, nPerKeep, rankQPhi);
   tmpvec = similar(yShift);
@@ -127,7 +127,7 @@
       snpSqrtWts = ones(grpSize);
     elseif snpWtType == "beta"
       # weights by beta density evaluated at MAF
-      snpSqrtWts = sqrt(pdf(Beta(1, 25), maf[1 : grpSize]));
+      snpSqrtWts = sqrt(Distributions.pdf(Distributions.Beta(1, 25), maf[1 : grpSize]));
     elseif snpWtType == "invvar"
       # weights by inverse variance maf*(1-maf)
       snpSqrtWts = 1 ./ sqrt( maf[1 : grpSize] .*

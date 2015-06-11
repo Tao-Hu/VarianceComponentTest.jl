@@ -1,9 +1,9 @@
-@everywhere function readgeno!(geno::Matrix{Float64}, curSNPSize::Int,
-                               nPer::Int, SNPSize::Int, idxRead::Int,
-                               bin2geno::Matrix{Float64},
-                               rawdata::Matrix{Int8}, offset::Int,
-                               flagAnnotate::Bool;
-                               offsetSize::Vector{Int64} = Int64[])
+function readgeno!(geno::Matrix{Float64}, curSNPSize::Int,
+                   nPer::Int, SNPSize::Int, idxRead::Int,
+                   bin2geno::Matrix{Float64},
+                   rawdata::Matrix{Int8}, offset::Int,
+                   flagAnnotate::Bool;
+                   offsetSize::Vector{Int64} = Int64[])
 
   if !flagAnnotate
     offset = (idxRead - 1) * SNPSize;

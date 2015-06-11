@@ -1,7 +1,9 @@
 module VarianceComponentTest
 
-@everywhere using Distributions
-@everywhere using Docile
+import Distributions
+if VERSION < v"0.4-"
+       using Docile
+end
 
 export
        readgeno!,

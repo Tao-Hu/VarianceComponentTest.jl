@@ -1,12 +1,12 @@
-@everywhere function loopwinFixsize(nSNP, nReads, rawdata, snpID, bin2geno, nPer,
-                                    SNPSize, flagAnnotate, snpWtType, keepIdx,
-                                    nPerKeep, kernel, kinship, test,
-                                    XtNullBasis, WPreSim, nBlockAscent, nMMmax,
-                                    nNullSimPts, tolX, pvalueComputing, device,
-                                    nNullSimNewtonIter, rankQPhi, evalPhiAdj,
-                                    XPhitNullBasis, yShift, y, KPhiAdj,
-                                    weightedW, QPhi, PrePartialSumW,
-                                    PreTotalSumW, windowSize, nPreRank, X, ynew)
+function loopwinFixsize(nSNP, nReads, rawdata, snpID, bin2geno, nPer,
+                        SNPSize, flagAnnotate, snpWtType, keepIdx,
+                        nPerKeep, kernel, kinship, test,
+                        XtNullBasis, WPreSim, nBlockAscent, nMMmax,
+                        nNullSimPts, tolX, pvalueComputing, device,
+                        nNullSimNewtonIter, rankQPhi, evalPhiAdj,
+                        XPhitNullBasis, yShift, y, KPhiAdj,
+                        weightedW, QPhi, PrePartialSumW,
+                        PreTotalSumW, windowSize, nPreRank, X, ynew)
 
   QRes = Array(Float64, nPerKeep, rankQPhi);
   nSNPredVec = fill(0, nReads);
@@ -158,7 +158,7 @@
         end
       elseif snpWtType == "beta"
         # weights by beta density evaluated at MAF
-        snpSqrtWts = sqrt(pdf(Beta(1, 25), maf[gLB[g] : gUB[g]]));
+        snpSqrtWts = sqrt(Distributions.pdf(Distributions.Beta(1, 25), maf[gLB[g] : gUB[g]]));
       elseif snpWtType == "invvar"
         # weights by inverse variance maf*(1-maf)
         snpSqrtWts = 1 ./ sqrt( maf[gLB[g] : gUB[g]] .*

@@ -1,4 +1,4 @@
-@doc """
+"""
 gwasvctest(plinkFile::String = "", covFile::String = "", traitFile::String = "",
 annotationFile::String = "", outFile::String = "", test::String = "eRLRT",
 kinship::String = "GRM", kernel::String = "GRM", pvalueComputing::String = "chi2",
@@ -58,7 +58,7 @@ default is "" (add no weights by default).
 Output name-value pair:
 
 "outFile" - Output file which store the P-values for SNP sets effects.
-  """ ->
+"""
 function gwasvctest(args...; covFile::String = "", device::String = "CPU",
                     infLambda::Float64 = 0.0, kernel::String = "GRM",
                     kinship::String = "GRM", nMMmax::Int = 0,
@@ -69,7 +69,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
                     traitFile::String = "", MemoryLimit::Int = 200000000,
                     pvalueComputing::String = "chi2", windowSize::Int = 50,
                     annotationFile::String = "")
-
+  
   ## parse data from files
   plinkBedfile = string(plinkFile, ".bed");
   plinkBimfile = string(plinkFile, ".bim");
@@ -506,7 +506,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
   PreTotalSumW = Array(Float64, nNullSimPts, nPreRank+1);
   tmpSumVec = Array(Float64, nNullSimPts);
   p1 = pointer(PrePartialSumW);
-  BLAS.blascopy!(nNullSimPts, rand(Chisq(tmpn), nNullSimPts), 1, p1, 1);
+  BLAS.blascopy!(nNullSimPts, rand(Distributions.Chisq(tmpn), nNullSimPts), 1, p1, 1);
   for i = 1 : nNullSimPts
     #pW = pointer(WPreSim) + (i - 1) * windowSize * sizeof(Float64);
     #tmpSumVec[i] = BLAS.asum(1, pW, 1);
@@ -515,7 +515,7 @@ function gwasvctest(args...; covFile::String = "", device::String = "CPU",
   end
   for j = 1 : nPreRank
     p1 = pointer(PrePartialSumW) + j * nNullSimPts * sizeof(Float64);
-    BLAS.blascopy!(nNullSimPts, rand(Chisq(tmpn - j), nNullSimPts), 1, p1, 1);
+    BLAS.blascopy!(nNullSimPts, rand(Distributions.Chisq(tmpn - j), nNullSimPts), 1, p1, 1);
     for i = 1 : nNullSimPts
       tmpSumVec[i] += WPreSim[j, i];
       PreTotalSumW[i, j+1] = tmpSumVec[i] + PrePartialSumW[i, j+1];

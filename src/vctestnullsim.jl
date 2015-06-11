@@ -1,24 +1,27 @@
-@everywhere function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
-  device::String = "CPU", nSimPts::Int = 10000, nNewtonIter::Int = 15,
-  test::String = "eLRT", pvalueComputing::String = "chi2",
-  PrePartialSumW::Array{Float64, 2} = [Float64[] Float64[]],
-  PreTotalSumW::Array{Float64, 2} = [Float64[] Float64[]],
-  partialSumWConst::Array{Float64, 1} = Float64[],
-  totalSumWConst::Array{Float64, 1} = Float64[],
-  windowSize::Int = 50, partialSumW::Array{Float64, 1} = Float64[],
-  totalSumW::Array{Float64, 1} = Float64[],
-  lambda::Array{Float64, 2} = [Float64[] Float64[]],
-  W::Array{Float64, 2} = [Float64[] Float64[]], nPreRank::Int = 20,
-  tmpmat0::Array{Float64, 2} = [Float64[] Float64[]],
-  tmpmat1::Array{Float64, 2} = [Float64[] Float64[]],
-  tmpmat2::Array{Float64, 2} = [Float64[] Float64[]],
-  tmpmat3::Array{Float64, 2} = [Float64[] Float64[]],
-  tmpmat4::Array{Float64, 2} = [Float64[] Float64[]],
-  tmpmat5::Array{Float64, 2} = [Float64[] Float64[]],
-  denomvec::Array{Float64, 1} = Float64[],
-  d1f::Array{Float64, 1} = Float64[],
-  d2f::Array{Float64, 1} = Float64[], offset::Int = 0,
-  nPtsChi2::Int = 300, simnull::Vector{Float64} = Float64[])
+function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
+                       device::String = "CPU", nSimPts::Int = 10000,
+                       nNewtonIter::Int = 15,
+                       test::String = "eLRT", pvalueComputing::String = "chi2",
+                       PrePartialSumW::Array{Float64, 2} = [Float64[] Float64[]],
+                       PreTotalSumW::Array{Float64, 2} = [Float64[] Float64[]],
+                       partialSumWConst::Array{Float64, 1} = Float64[],
+                       totalSumWConst::Array{Float64, 1} = Float64[],
+                       windowSize::Int = 50,
+                       partialSumW::Array{Float64, 1} = Float64[],
+                       totalSumW::Array{Float64, 1} = Float64[],
+                       lambda::Array{Float64, 2} = [Float64[] Float64[]],
+                       W::Array{Float64, 2} = [Float64[] Float64[]],
+                       nPreRank::Int = 20,
+                       tmpmat0::Array{Float64, 2} = [Float64[] Float64[]],
+                       tmpmat1::Array{Float64, 2} = [Float64[] Float64[]],
+                       tmpmat2::Array{Float64, 2} = [Float64[] Float64[]],
+                       tmpmat3::Array{Float64, 2} = [Float64[] Float64[]],
+                       tmpmat4::Array{Float64, 2} = [Float64[] Float64[]],
+                       tmpmat5::Array{Float64, 2} = [Float64[] Float64[]],
+                       denomvec::Array{Float64, 1} = Float64[],
+                       d1f::Array{Float64, 1} = Float64[],
+                       d2f::Array{Float64, 1} = Float64[], offset::Int = 0,
+                       nPtsChi2::Int = 300, simnull::Vector{Float64} = Float64[])
   # VCTESTNULLSIM Simulate null distribution for testing zero var. component
   #
   # VCTESTNULLSIM(evalV,evalAdjV,n,rankX,WPreSim) simulate the null distributions
@@ -62,7 +65,7 @@
     end
 
     if isempty(PrePartialSumW) || isempty(PreTotalSumW)
-      partialSumWConst = rand(Chisq(n - rankX - rankAdjV), nSimPts);
+      partialSumWConst = rand(Distributions.Chisq(n - rankX - rankAdjV), nSimPts);
       totalSumWConst = similar(partialSumWConst);
       for i = 1 : nSimPts
         pW = pointer(WPreSim) + (i - 1) * size(WPreSim, 1) * sizeof(Float64);
@@ -70,7 +73,7 @@
       end
     else
       if rankAdjV > nPreRank
-        partialSumWConst = rand(Chisq(n - rankX - rankAdjV), nSimPts);
+        partialSumWConst = rand(Distributions.Chisq(n - rankX - rankAdjV), nSimPts);
         for i = 1 : nSimPts
           pW = pointer(WPreSim) + (i - 1) * size(WPreSim, 1) * sizeof(Float64);
           totalSumWConst[i] = BLAS.asum(rankAdjV, pW, 1) + partialSumWConst[i];
@@ -371,7 +374,7 @@
         #println("mean of simnull = ", mean(simnull), ", var = ", var(simnull));
         #println("length of simnull = ", length(simnull), ", sum = ", sum(simnull));
         #println("ahat = ", ahat, ", bhat = ", bhat, ", teststat = ", teststat, ", patzero = ", patzero);
-      pvalue = (1 - patzero) * (1 - cdf(Chisq(bhat), teststat / ahat));
+      pvalue = (1 - patzero) * (1 - Distributions.cdf(Distributions.Chisq(bhat), teststat / ahat));
       if teststat == 0; pvalue = pvalue + patzero; end;
       #end
       return pvalue;
