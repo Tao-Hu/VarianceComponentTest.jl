@@ -22,7 +22,7 @@ julia> using VarianceComponentTest
 julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "none", test = "eLRT")
 ```
 
-Then the output will be written to `chr3-geno-MAP4-849.out` at current directory.
+Then the output will be written to `chr3-geno-MAP4-849-julia.out` at the same directory as PLINK files.
 
 * exact restricted likelihood ratio test (eRLRT)
 
