@@ -44,8 +44,6 @@ For unrelated sample, \sigma_a^2 is zero, thus the model reduce to
 
 ![](Varyred.png)
 
-The detailed descriptions of our algorithms and implementations are ??? add manuscript here ???.
-
 ---
 ## Specify input PLINK files
 
