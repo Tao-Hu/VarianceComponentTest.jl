@@ -68,11 +68,18 @@ julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.
 ---
 ## Option `nNullSimPts`
 
-If Monte Carlo method is chosen and you want to increase the precision of p-value, then you can generate more replicates
+If Monte Carlo method is chosen, generate 10,000 replicates should be sufficient (you can also generate even more replicates to increase the precision of p-value)
 
 ```julia
 julia> using VarianceComponentTest
-julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "none", test = "eRLRT", pvalueComputing = "MonteCarlo", nNullSimPts = 100000)
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "none", test = "eRLRT", pvalueComputing = "MonteCarlo", nNullSimPts = 10000)
+```
+
+If Chi squared approximation method is chosen, you can generate more replicates (default value is 1,000,000) to have a better estimator of point mass at 0
+
+```julia
+julia> using VarianceComponentTest
+julia> gwasvctest(plinkFile = "chr3-geno-MAP4-849", covFile = "covariates-julia.txt", traitFile = "y-julia.txt", kinship = "none", test = "eRLRT", pvalueComputing = "chi2", nNullSimPts = 10000000)
 ```
 
 ---

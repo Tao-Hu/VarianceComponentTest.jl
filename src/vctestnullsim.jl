@@ -1,5 +1,5 @@
 function vctestnullsim(teststat, evalV, evalAdjV, n, rankX, WPreSim;
-                       device::String = "CPU", nSimPts::Int = 10000,
+                       device::String = "CPU", nSimPts::Int = 1000000,
                        nNewtonIter::Int = 15,
                        test::String = "eLRT", pvalueComputing::String = "chi2",
                        PrePartialSumW::Array{Float64, 2} = [Float64[] Float64[]],

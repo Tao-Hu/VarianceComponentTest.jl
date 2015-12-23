@@ -1,6 +1,6 @@
 function vctest(y, X, V; bInit::Array{Float64, 1} = Float64[],
                 devices::String = "CPU", nMMmax::Int = 0,
-                nBlockAscent::Int = 1000, nNullSimPts::Int = 10000,
+                nBlockAscent::Int = 1000, nNullSimPts::Int = 1000000,
                 nNullSimNewtonIter::Int = 15, tests::String = "eLRT",
                 tolX::Float64 = 1e-4,
                 vcInit::Array{Float64, 1} = Float64[],

@@ -3,7 +3,7 @@ gwasvctest(plinkFile::String = "", covFile::String = "", traitFile::String = "",
 annotationFile::String = "", outFile::String = "", test::String = "eRLRT",
 kinship::String = "GRM", kernel::String = "GRM", pvalueComputing::String = "chi2",
 windowSize::Int = 50, infLambda::Float64 = 0.0, MemoryLimit::Int = 200000000,
-nNullSimPts::Int = 10000, nMMmax::Int = 0, nBlockAscent::Int = 1000,
+nNullSimPts::Int = 1000000, nMMmax::Int = 0, nBlockAscent::Int = 1000,
 nNullSimNewtonIter::Int = 15, tolX::Float64 = 1e-4, snpWtType::String = "")
 
 Test the SNP set effect with presence of additive genetic effect and
@@ -42,7 +42,7 @@ trade-off for approximating kinship matrix, default is 0.0.
 "MemoryLimit" - Max memory used to read and store the raw data, default
 is 200000000 (equivalent to 200 megabytes).
 
-"nNullSimPts"- # simulation samples, default is 10000.
+"nNullSimPts"- # simulation samples, default is 1,000,000.
 
 "nMMmax" - Max MM iterations, default is 10 (eLRT) or 1000 (eRLRT).
 
@@ -62,14 +62,14 @@ Output name-value pair:
 function gwasvctest(args...; covFile::String = "", device::String = "CPU",
                     infLambda::Float64 = 0.0, kernel::String = "GRM",
                     kinship::String = "GRM", nMMmax::Int = 0,
-                    nBlockAscent::Int = 1000, nNullSimPts::Int = 10000,
+                    nBlockAscent::Int = 1000, nNullSimPts::Int = 1000000,
                     nNullSimNewtonIter::Int = 15, outFile::String = "",
                     plinkFile::String = "", snpWtType::String = "",
                     test::String = "eRLRT", tolX::Float64 = 1e-4,
                     traitFile::String = "", MemoryLimit::Int = 200000000,
                     pvalueComputing::String = "chi2", windowSize::Int = 50,
                     annotationFile::String = "")
-  
+
   ## parse data from files
   plinkBedfile = string(plinkFile, ".bed");
   plinkBimfile = string(plinkFile, ".bim");

@@ -135,11 +135,14 @@ The default value for option `pvalueComputing` is *chi2*. The approximation effe
 Option `nNullSimPts` lets you to decide how many replicates to generate for obtaining null distribution of test statistic and p-value.
 
 * For `pvalueComputing = "MonteCarlo"`, the more replicates to generate, the more precise the p-value will be (smaller standard error)
-* For `pvalueComputing = "chi2"`, the number of replicates does not matter too much, it only effect the estimate of point mass at 0 for test statistic
+* For `pvalueComputing = "chi2"`, the number of replicates only effects the estimate of point mass at 0 for test statistic
 
-`nNullSimPts` should take positive integer, and the default value is 10,000.
+`nNullSimPts` should take positive integer, and the default value is 1,000,000.
 
-**Note**: Option `nNullSimPts` is only valid for eLRT and eRLRT.
+**Note**:
+
+1. Option `nNullSimPts` is only valid for eLRT and eRLRT.
+2. For `pvalueComputing = "MonteCarlo"`, set `nNullSimPts` to 10,000 should be sufficient. Otherwise, Monte Carlo method with the default value is too slow.
 
 ---
 ## Choose method for computing kinship matrix
